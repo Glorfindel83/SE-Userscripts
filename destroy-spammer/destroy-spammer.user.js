@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.1
+// @version     0.2
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -40,32 +40,25 @@
     
   // Create Destroy link
   var destroyLink = document.createElement('a');
+  var attribute = document.createAttribute("href");
+  attribute.value = "#";
+  destroyLink.setAttributeNode(attribute); 
   destroyLink.appendChild(document.createTextNode('Destroy spammer'));
   destroyLink.onclick = function () {
-    // 'Open' moderator menu
-    $.get({
-      url: 'https://apple.stackexchange.com/admin/users/' + userID + '/moderator-menu?_=',
-      cache: false,
-      success: function (html) {
-        // Find key
-        var fkey = ($($.parseHTML(html)).find('input[name=fkey]').attr('value'));
-        
-        // Ask for confirmation
-        if (window.confirm('Are you sure?')) {
-          $.post({
-            url: 'https://apple.stackexchange.com/admin/users/' + userID + '/destroy',
-            data: 'annotation=&deleteReasonDetails=&mod-actions=destroy&destroyReason=This+user+was+created+to+post+spam+or+nonsense+and+has+no+other+positive+participation&destroyReasonDetails=&fkey=' + fkey,
-            success: function (data) {
-              // Reload page
-              window.location.reload();
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-              console.log('Error: ' + textStatus + ' ' + errorThrown);
-            }
-          });
+    // Ask for confirmation
+    if (window.confirm('Are you sure?')) {
+      $.post({
+        url: 'https://apple.stackexchange.com/admin/users/' + userID + '/destroy',
+        data: 'annotation=&deleteReasonDetails=&mod-actions=destroy&destroyReason=This+user+was+created+to+post+spam+or+nonsense+and+has+no+other+positive+participation&destroyReasonDetails=&fkey=' + window.localStorage["se:fkey"].split(",")[0],
+        success: function (data) {
+          // Reload page
+          window.location.reload();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          console.log('Error: ' + textStatus + ' ' + errorThrown);
         }
-      }
-    });
+      });
+    }
   };
   
   // Add to document
