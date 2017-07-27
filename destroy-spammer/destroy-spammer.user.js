@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.2
+// @version     0.3
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -40,15 +40,12 @@
     
   // Create Destroy link
   var destroyLink = document.createElement('a');
-  var attribute = document.createAttribute("href");
-  attribute.value = "#";
-  destroyLink.setAttributeNode(attribute); 
   destroyLink.appendChild(document.createTextNode('Destroy spammer'));
   destroyLink.onclick = function () {
     // Ask for confirmation
     if (window.confirm('Are you sure?')) {
       $.post({
-        url: 'https://apple.stackexchange.com/admin/users/' + userID + '/destroy',
+        url: 'https://' + document.location.host + '/admin/users/' + userID + '/destroy',
         data: 'annotation=&deleteReasonDetails=&mod-actions=destroy&destroyReason=This+user+was+created+to+post+spam+or+nonsense+and+has+no+other+positive+participation&destroyReasonDetails=&fkey=' + window.localStorage["se:fkey"].split(",")[0],
         success: function (data) {
           // Reload page
