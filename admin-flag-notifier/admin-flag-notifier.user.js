@@ -3,6 +3,8 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Refreshes the flag dashboard automatically and sends desktop notifications when there are new flags.
 // @author      Glorfindel
+// @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/admin-flag-notifier/admin-flag-notifier.user.js
+// @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/admin-flag-notifier/admin-flag-notifier.user.js
 // @version     0.1
 // @match       *://*.stackexchange.com/admin/dashboard*
 // @match       *://*.stackoverflow.com/admin/dashboard*
