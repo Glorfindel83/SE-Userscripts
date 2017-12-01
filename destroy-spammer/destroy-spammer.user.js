@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.3.1
+// @version     0.4
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -18,6 +18,7 @@
   // Determine user ID
   var userIDRegex = /\/users\/(\d+)\//g;
   var userID = userIDRegex.exec(document.location) [1];
+  var userName = $(".name.mod-tabs").attr("title");
   var moderatorLinkElement = $('a#user-moderator-link-' + userID);
   if (moderatorLinkElement.length == 0) // Current user is not a moderator - no action possible
     return;
@@ -33,7 +34,7 @@
   var deletedAnswers = answersPanel.find('td.answer-hyperlink.deleted-answer').length;
   if (undeletedAnswers > 0) // User has content - use the dialog instead
     return;
-  if (deletedQuestions + deletedAnswers == 0) // User has no deleted content - use the dialog instead
+  if (deletedQuestions + deletedAnswers == 0 && !userName.contains("Insurance")) // User has no deleted content - use the dialog instead
     return;
   if (deletedQuestions + deletedAnswers > 4) // User has too much deleted content - use the dialog instead
     return;
