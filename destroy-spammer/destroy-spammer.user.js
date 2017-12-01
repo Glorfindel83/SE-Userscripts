@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.4.1
+// @version     0.4.2
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -15,14 +15,58 @@
 // ==/UserScript==
 (function () {
   'use strict';
+  
   // Determine user ID
   var userIDRegex = /\/users\/(\d+)\//g;
   var userID = userIDRegex.exec(document.location) [1];
   var userName = $(".name.mod-tabs").attr("title");
+  var userNameIsSuspicious = typeof userName !== 'undefined' && userName.toLowerCase().contains("insur");
+
+  // Find 'Mod' dialog link
   var moderatorLinkElement = $('a#user-moderator-link-' + userID);
-  if (moderatorLinkElement.length == 0) // Current user is not a moderator - no action possible
+  if (moderatorLinkElement.length == 0) // Current user is not a moderator, or wrong tab - no action possible
     return;
+  var destroySpammerLinkAdded = false;
+  
+  // This function will create the 'Destroy spammer' link;
+  // this can happen either synchronously or asynchronously (after fetching additional data).
+  var createDestroyLink = function (userID) {
+    // The link can be added only once.
+    if (destroySpammerLinkAdded)
+      return;
+    destroySpammerLinkAdded = true;
     
+    var destroyLink = document.createElement('a');
+    destroyLink.appendChild(document.createTextNode('Destroy spammer'));
+    destroyLink.onclick = function () {
+      // Ask for confirmation
+      if (window.confirm('Are you sure?')) {
+        $.post({
+          url: 'https://' + document.location.host + '/admin/users/' + userID + '/destroy',
+          data: 'annotation=&deleteReasonDetails=&mod-actions=destroy&destroyReason=This+user+was+created+to+post+spam+or+nonsense+and+has+no+other+positive+participation&destroyReasonDetails=&fkey=' + window.localStorage["se:fkey"].split(",")[0],
+          success: function (data) {
+            // Reload page
+            window.location.reload();
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            window.alert('An error occurred, please try again later.');
+            console.log('Error: ' + textStatus + ' ' + errorThrown);
+          }
+        });
+      }
+    };
+    
+    // Add to document
+    moderatorLinkElement.after(destroyLink);
+  };  
+  
+  // Check for keywords in spammers' profiles
+  $.get(document.location.href.split('?')[0] + "?tab=profile", function (data) {
+    if (data.contains("1-844-909-0831")) {
+      createDestroyLink(userID);
+    }
+  });    
+
   // Check for (deleted) questions and answers
   var questionsPanel = $('#user-panel-questions');
   var undeletedQuestions = questionsPanel.find('td.question-hyperlink').not('.deleted-answer').length; // yes, deleted-answer. Don't ask why.
@@ -34,32 +78,11 @@
   var deletedAnswers = answersPanel.find('td.answer-hyperlink.deleted-answer').length;
   if (undeletedAnswers > 0) // User has content - use the dialog instead
     return;
-  if (deletedQuestions + deletedAnswers == 0 && !userName.toLowerCase().contains("insur")) // User has no deleted content - use the dialog instead
+  if (deletedQuestions + deletedAnswers == 0 && !userNameIsSuspicious) // User has no deleted content - use the dialog instead
     return;
   if (deletedQuestions + deletedAnswers > 4) // User has too much deleted content - use the dialog instead
     return;
-    
-  // Create Destroy link
-  var destroyLink = document.createElement('a');
-  destroyLink.appendChild(document.createTextNode('Destroy spammer'));
-  destroyLink.onclick = function () {
-    // Ask for confirmation
-    if (window.confirm('Are you sure?')) {
-      $.post({
-        url: 'https://' + document.location.host + '/admin/users/' + userID + '/destroy',
-        data: 'annotation=&deleteReasonDetails=&mod-actions=destroy&destroyReason=This+user+was+created+to+post+spam+or+nonsense+and+has+no+other+positive+participation&destroyReasonDetails=&fkey=' + window.localStorage["se:fkey"].split(",")[0],
-        success: function (data) {
-          // Reload page
-          window.location.reload();
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          window.alert('An error occurred, please try again later.');
-          console.log('Error: ' + textStatus + ' ' + errorThrown);
-        }
-      });
-    }
-  };
   
-  // Add to document
-  moderatorLinkElement.after(destroyLink);
+  // Create Destroy link immediately
+  createDestroyLink(userID);  
 }) ();
