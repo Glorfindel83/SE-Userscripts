@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.4.2
+// @version     0.4.3
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -58,14 +58,14 @@
     
     // Add to document
     moderatorLinkElement.after(destroyLink);
-  };  
+  };
   
   // Check for keywords in spammers' profiles
   $.get(document.location.href.split('?')[0] + "?tab=profile", function (data) {
-    if (data.contains("1-844-909-0831")) {
+    if (data.search(/1\D844\D909\D0831/g)) {
       createDestroyLink(userID);
     }
-  });    
+  });
 
   // Check for (deleted) questions and answers
   var questionsPanel = $('#user-panel-questions');
@@ -84,5 +84,5 @@
     return;
   
   // Create Destroy link immediately
-  createDestroyLink(userID);  
+  createDestroyLink(userID);
 }) ();
