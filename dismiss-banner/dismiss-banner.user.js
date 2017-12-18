@@ -16,7 +16,7 @@
 
 (function () {
   "use strict";
-  setTimeout(function() {
+  setTimeout(function () {
     $("#net-neutrality-dismiss").click();
   }, 100);
 })();
