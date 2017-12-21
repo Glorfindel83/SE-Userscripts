@@ -17,6 +17,12 @@
 (function () {
   "use strict";
 
+  // Is this a Q&A page?
+  var questionLink = $("#question-header a").attr("href");
+  if (typeof(questionLink) === "undefined") {
+    return;
+  }
+
   // If there's a 'start a bounty' link, we have nothing to do.
   if ($("a.bounty-link.bounty").length !== 0) {
     return;
@@ -75,7 +81,6 @@
   }
   
   // Find previous bounties on this question by current user
-  var questionLink = $("#question-header a").attr("href");
   var questionID = /^\/questions\/(\d+)\//.exec(questionLink)[1];
   $.get("https://" + window.location.host + "/users/current?tab=bounties&sort=offered", function (data) {
     var summaries = $(data).find("#question-summary-" + questionID);
@@ -93,5 +98,14 @@
       addInformation("minimum bounty (" + minimumBounty + ") higher than reputation (" + reputation + ")"); 
       return;
     }
+    
+    // Find currently active bounties by current user
+    $.get("https://" + window.location.host + "/users/current?tab=bounties&sort=active", function (data) {
+      var activeCount = parseInt($(data).find("#user-tab-bounties h1 span.count").text(), 10);
+      if (activeCount >= 3) {
+        addInformation("you have " + activeCount + " currently active bounties"); 
+        return;
+      }
+    });
   });  
 })();
