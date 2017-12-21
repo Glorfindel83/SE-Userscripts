@@ -1,0 +1,97 @@
+// ==UserScript==
+// @name        Why No Bounty?
+// @namespace   https://github.com/Glorfindel83/
+// @description Adds information to a question indicating why you can't start a bounty.
+// @author      Glorfindel
+// @version     0.1
+// @match       *://*.stackexchange.com/*
+// @match       *://*.stackoverflow.com/*
+// @match       *://*.superuser.com/*
+// @match       *://*.serverfault.com/*
+// @match       *://*.askubuntu.com/*
+// @match       *://*.stackapps.com/*
+// @match       *://*.mathoverflow.net/*
+// @grant       none
+// ==/UserScript==
+
+(function () {
+  "use strict";
+
+  // If there's a 'start a bounty' link, we have nothing to do.
+  if ($("a.bounty-link.bounty").length !== 0) {
+    return;
+  }
+  
+  var addInformation = function (message) {
+    $("#question > table > tbody").append("<tr class=\"bounty-notification\"><td class=\"votecell\"/>"
+      + "<td>bounty not possible: " + message + "</td></tr>");
+  };
+  
+  // Meta site?
+  if (window.location.host != "meta.stackexchange.com" && window.location.host.contains("meta")) {
+    addInformation("meta sites don't have bounties");
+    return;
+  }
+  
+  // Is there an open bounty?
+  if ($("div.question-status.bounty").length !== 0) {
+  	addInformation("there is already an open bounty");
+    return;
+  }
+  
+  // Is the question closed / locked?
+  var status = $("#question .question-status h2 b").text();
+  if (status === "closed" || status === "put on hold" || status == "marked") {
+    addInformation("the question is closed");
+    return;
+  } else if (status === "locked") {
+    addInformation("the question is locked");
+    return;
+  }
+  
+  // Is the question at least two days old?
+  var creationDate = Date.parse($("#question .owner .user-action-time span").attr("title"));
+  var ageInSeconds = (Date.now() - creationDate)  / 1000;
+  if (ageInSeconds < 2 * 86400) {
+    addInformation("the question is not two days old yet");
+    return;
+  }
+  
+  // Get reputation of current user
+  var reputation = parseInt($("div.-rep.js-header-rep").text().replace(",", ""), 10);
+  if (reputation < 75) {
+    addInformation("you need 75 reputation to create a bounty");
+    return;
+  }
+  
+  // Does the user have an answer to this question?
+  var profileURL = $("a.my-profile.js-gps-track").attr("href");
+  var hasAnswer = $(".answercell .user-details a").is(function(index, element) {
+    return $(element).attr("href") == profileURL;
+  });
+  if (hasAnswer && reputation < 100) {
+    addInformation("you need 100 reputation to create a bounty for a question which you've already answered");
+    return;
+  }
+  
+  // Find previous bounties on this question by current user
+  var questionLink = $("#question-header a").attr("href");
+  var questionID = /^\/questions\/(\d+)\//.exec(questionLink)[1];
+  $.get("https://" + window.location.host + "/users/current?tab=bounties&sort=offered", function (data) {
+    var summaries = $(data).find("#question-summary-" + questionID);
+    var minimumBounty = 50;
+    if (summaries.length !== 0) {
+      // assume the last (highest) bounty is the first in this list
+      var highestBounty = parseInt(summaries[0].find("div.bounty-indicator").replace("+", ""), 10);
+      minimumBounty = highestBounty * 2;
+      if (minimumBounty > 500) {
+        addInformation("last bounty was " + highestBounty + " which cannot be doubled"); 
+        return;
+      }
+    }
+    if (reputation > minimumBounty) {
+      addInformation("minimum bounty (" + minimumBounty + ") higher than reputation (" + reputation + ")"); 
+      return;
+    }
+  });  
+})();
