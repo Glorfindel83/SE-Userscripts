@@ -46,16 +46,19 @@
   }
   
   // Is the question closed / locked?
-  var status = $("#question .question-status h2 b").text();
-  if (status === "closed" || status === "put on hold" || status == "marked") {
-    addInformation("the question is closed");
-    return;
-  } else if (status === "locked") {
-    addInformation("the question is locked");
-    return;
-  } else if (status === "deleted") {
-    addInformation("the question is deleted");
-    return;
+  var questionStatus = $("#question .question-status h2 b");
+  if (questionStatus.length !== 0) {
+    var status = questionStatus.get(0).text();
+    if (status === "closed" || status === "put on hold" || status == "marked") {
+      addInformation("the question is closed");
+      return;
+    } else if (status === "locked") {
+      addInformation("the question is locked");
+      return;
+    } else if (status === "deleted") {
+      addInformation("the question is deleted");
+      return;
+    }
   }
   
   // Is the question at least two days old?
