@@ -48,7 +48,7 @@
   // Is the question closed / locked?
   var questionStatus = $("#question .question-status h2 b");
   if (questionStatus.length !== 0) {
-    var status = questionStatus.get(0).text();
+    var status = questionStatus.get(0).innerText;
     if (status === "closed" || status === "put on hold" || status == "marked") {
       addInformation("the question is closed");
       return;
