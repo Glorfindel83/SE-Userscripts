@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds information to a question indicating why you can't start a bounty.
 // @author      Glorfindel
-// @version     0.1
+// @version     0.2
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -53,6 +53,9 @@
   } else if (status === "locked") {
     addInformation("the question is locked");
     return;
+  } else if (status === "deleted") {
+    addInformation("the question is deleted");
+    return;
   }
   
   // Is the question at least two days old?
@@ -94,7 +97,7 @@
         return;
       }
     }
-    if (reputation > minimumBounty) {
+    if (reputation < minimumBounty) {
       addInformation("minimum bounty (" + minimumBounty + ") higher than reputation (" + reputation + ")"); 
       return;
     }
