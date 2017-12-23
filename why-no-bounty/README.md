@@ -10,3 +10,7 @@ This userscript adds some information below a question (at the usual location of
 
 - Install the userscript with
 [this direct link](https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/why-no-bounty/why-no-bounty.user.js).
+
+## Support
+
+If you have any questions, please post a comment on [this Stack Apps question](https://stackapps.com/q/7722/34061).
