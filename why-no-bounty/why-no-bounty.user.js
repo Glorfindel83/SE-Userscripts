@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds information to a question indicating why you can't start a bounty.
 // @author      Glorfindel
-// @version     0.2
+// @version     0.3
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -30,12 +30,12 @@
   
   var addInformation = function (message) {
     $("#question > table > tbody").append("<tr class=\"bounty-notification\"><td class=\"votecell\"/>"
-      + "<td>bounty not possible: " + message + "</td></tr>");
+      + "<td style=\"color: gray; padding: 5px 0 0 3px\">bounty not possible: " + message + "</td></tr>");
   };
   
   // Meta site?
   if (window.location.host != "meta.stackexchange.com" && window.location.host.contains("meta")) {
-    addInformation("meta sites don't have bounties");
+    addInformation("meta sites don't allow bounties");
     return;
   }
   
@@ -96,12 +96,12 @@
       var highestBounty = parseInt(summaries[0].find("div.bounty-indicator").replace("+", ""), 10);
       minimumBounty = highestBounty * 2;
       if (minimumBounty > 500) {
-        addInformation("last bounty was " + highestBounty + " which cannot be doubled"); 
+        addInformation("the last bounty was " + highestBounty + " which cannot be doubled"); 
         return;
       }
     }
     if (reputation < minimumBounty) {
-      addInformation("minimum bounty (" + minimumBounty + ") higher than reputation (" + reputation + ")"); 
+      addInformation("the minimum bounty (" + minimumBounty + ") is higher than your reputation (" + reputation + ")"); 
       return;
     }
     
@@ -109,7 +109,7 @@
     $.get("https://" + window.location.host + "/users/current?tab=bounties&sort=active", function (data) {
       var activeCount = parseInt($(data).find("#user-tab-bounties h1 span.count").text(), 10);
       if (activeCount >= 3) {
-        addInformation("you have " + activeCount + " currently active bounties"); 
+        addInformation("you currently have " + activeCount + " active bounties"); 
         return;
       }
     });
