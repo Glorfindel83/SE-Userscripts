@@ -7,15 +7,14 @@ totals across the network.
 
 ## Installation
 
-- Make sure you have Tampermonkey (for Chrome)
-or Greasemonkey / Violentmonkey (for Firefox) installed.
-
 - Install the userscript with
 [this direct link](https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/global-review-summary/global-review-summary.user.js).
 
+<sub>developed & tested with Violentmonkey on Firefox</sub>
+
 ## Support
 
-If you have any questions, please post a comment on [this Stack Apps question](https://stackapps.com/q//34061).
+If you have any questions, please post a comment on [this Stack Apps question](https://stackapps.com/q/7723/34061).
 
 ## Attribution
 
