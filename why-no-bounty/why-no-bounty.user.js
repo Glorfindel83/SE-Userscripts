@@ -24,7 +24,7 @@
   }
 
   // If there's a 'start a bounty' or 'question eligible for bounty in x days' link, we have nothing to do.
-  if ($("a.bounty-link.bounty").length !== 0 || $("a[href='/help/bounty']").length !== 0) {
+  if ($("a.bounty-link.bounty").length !== 0 || document.getElementById("bounty-link bounty") != null) {
     return;
   }
   
