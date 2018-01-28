@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name          Stack Exchange Global Review Summary
-// @version       0.1
+// @version       0.2
 // @description   Stack Exchange network wide review summary available in your network profile
 // @author        Glorfindel
 // @attribution   Floern (https://github.com/Floern)
+// @updateURL     https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/global-review-summary/global-review-summary.user.js
+// @downloadURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/global-review-summary/global-review-summary.user.js
 // @include       *://stackexchange.com/users/*/*
 // @match         *://*.stackexchange.com/review*
 // @match         *://*.stackoverflow.com/review*
@@ -240,7 +242,7 @@ function parseNetworkAccounts(html) {
         }
 
         let siteName = siteLinkNode.textContent.trim();
-        let siteReviewURL = siteLinkNode.href.replace(/users\/.*$/i, 'review/');
+        let siteURL = siteLinkNode.href.replace(/users\/.*$/i, '');
 
         // get reputation
         let reputationNode = accountNode.querySelector('.account-stat span.account-number');
@@ -248,48 +250,84 @@ function parseNetworkAccounts(html) {
             continue;
         }
         let reputation = parseInt(reputationNode.innerHTML.replace(",", ""));
-        // 350 is the minimum (for beta sites)
-        if (reputation < 350) {
-            continue;
-        }
 
-        accounts.push({ siteName: siteName, reviewURL: siteReviewURL });
+        accounts.push({ siteName: siteName, reputation: reputation, siteURL: siteURL });
 
         // add meta site
-        if (!/(meta\.stackexchange|stackapps)\.com\//.test(siteReviewURL)) {
-            let metaSiteReviewURL;
-            if (/\.stackexchange\.com\//.test(siteReviewURL)) // SE 2.0 sites
-                metaSiteReviewURL = siteReviewURL.replace('.stackexchange.com', '.meta.stackexchange.com');
-            else if (/\/\/[a-z]{2}\.stackoverflow\.com\//.test(siteReviewURL)) // localized SO sites
-                metaSiteReviewURL = siteReviewURL.replace('.stackoverflow.com', '.meta.stackoverflow.com');
+        if (!/(meta\.stackexchange|stackapps)\.com\//.test(siteURL)) {
+            let metaSiteURL;
+            if (/\.stackexchange\.com\//.test(siteURL)) // SE 2.0 sites
+                metaSiteURL = siteURL.replace('.stackexchange.com', '.meta.stackexchange.com');
+            else if (/\/\/[a-z]{2}\.stackoverflow\.com\//.test(siteURL)) // localized SO sites
+                metaSiteURL = siteURL.replace('.stackoverflow.com', '.meta.stackoverflow.com');
             else // SE 1.0 sites
-                metaSiteReviewURL = siteReviewURL.replace('//', '//meta.');
-            accounts.push({ siteName: siteName + " Meta", reviewURL: metaSiteReviewURL });
+                metaSiteURL = siteURL.replace('//', '//meta.');
+            accounts.push({ siteName: siteName + " Meta", reputation: reputation, siteURL: metaSiteURL });
         }
     }
 
     // load the sites
     let i = -1;
     let loaded = 0;
+    function startLoadingSiteReviewSummary(account) {
+        loadSiteReviewSummary(account.siteName, account.siteURL + 'review/', loadCallback, 0);
+    };
+    function loadCallback() {
+        loaded++;
+        document.getElementById('review-summary-loading-progress').textContent = loaded + " / " + accounts.length;
+        if (loaded >= accounts.length) {
+            // end of list
+            document.getElementById('review-summary-loading').style.visibility = 'hidden';
+        }
+        loadNextSite();
+    };  
     function loadNextSite() {
         i++;
         if (i >= accounts.length) {
             // end of list
             return;
         }
-
+      
         let account = accounts[i];
         let delay = 1000;
         setTimeout(function() {
-            loadSiteReviewSummary(account.siteName, account.reviewURL, function() {
-                loaded++;
-                document.getElementById('review-summary-loading-progress').textContent = loaded + " / " + accounts.length;
-                if (loaded >= accounts.length) {
-                    // end of list
-                    document.getElementById('review-summary-loading').style.visibility = 'hidden';
-                }
-                loadNextSite();
-            }, 0);
+            if (account.reputation >= 350) {
+                // 350 is the minimum reputation to review on beta-sites
+                startLoadingSiteReviewSummary(account);
+            } else {
+                // check for Custodian badges first
+                console.log('loading ' + account.siteName + ' (badges)');
+                var url = account.siteURL + 'users/current?tab=badges&sort=name';
+                GM.xmlHttpRequest({
+                    method: 'GET',
+                    url: url,
+                    onload: function(response) {
+                        let pageNode = document.createElement('div');
+                        pageNode.innerHTML = response.response;
+                        var badges = pageNode.querySelectorAll(".user-badges a.badge");
+                        var found = false;
+                        for (j = 0; j < badges.length; j++) {
+                            // On localized sites, this badge has a different name
+                            if (/Custodian|Страж|見回り|Guardião|Custodio/gi.test(badges[j].innerText)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                      
+                        if (found) {
+                            startLoadingSiteReviewSummary(account);
+                        } else {
+                            loadCallback();
+                        }
+                    },
+                    onerror: function(response) {
+                        console.error('loadSiteReviewSummary: ' + url);
+                        console.error('loadSiteReviewSummary: ' + JSON.stringify(response));
+                        loadCallback();
+                        showLoadingError(url, response.status);
+                    }
+                });
+            }
         }, delay);
     };
 
