@@ -17,4 +17,4 @@ you earned the badge.
 
 ## Support
 
-- Stack Apps
+- [Stack Apps](https://stackapps.com/q/7818/34061)
