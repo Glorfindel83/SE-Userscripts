@@ -2,11 +2,11 @@
 
 This userscript turns the checkmarks in the badge list (which indicate you've earned a
 specific badge) to links to your *personal* badge page, where you can see when and where
-you earned the badge
+you earned the badge.
 
  ![](badge-list.png)
  
- ![](badge.png)
+ ![](badge-page.png)
 
 ## Installation
 
