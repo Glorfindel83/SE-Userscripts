@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/admin-flag-notifier/admin-flag-notifier.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/admin-flag-notifier/admin-flag-notifier.user.js
-// @version     0.1
+// @version     0.2
 // @match       *://*.stackexchange.com/admin/dashboard*
 // @match       *://*.stackoverflow.com/admin/dashboard*
 // @match       *://*.superuser.com/admin/dashboard*
@@ -32,7 +32,7 @@
   console.log("Current: " + currentFlags);
 
   setInterval(function () {
-    var url = "https://" + host + "/admin/dashboard?filtered=false";
+    var url = 'https://' + host + '/admin/dashboard?filtered=' + !document.getElementById("chk-apply-filters").checked;
     console.log("Calling: " + url);
     $.get(url, function (data) {
       var updatedTitle = $("<html/>").html(data).find("title").text();
