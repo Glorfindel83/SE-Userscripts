@@ -32,7 +32,7 @@
   console.log("Current: " + currentFlags);
 
   setInterval(function () {
-    var url = `https://{host}/admin/dashboard?filtered={document.getElementById("chk-apply-filters").checked}`;
+    var url = `https://{host}/admin/dashboard?filtered={!document.getElementById("chk-apply-filters").checked}`;
     console.log("Calling: " + url);
     $.get(url, function (data) {
       var updatedTitle = $("<html/>").html(data).find("title").text();
