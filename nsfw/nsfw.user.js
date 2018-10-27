@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.1
+// @version     0.2
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -42,6 +42,7 @@
         let postMenu = $(self.parentElement.parentElement).find('div.post-menu')[0];
         $(postMenu).append($('<span class="lsep">|</span>'));
         $(postMenu).append($('<a href="' + revisionHistory + '">revisions</a>'));
+        $('<div>post content normally hidden, but made visible by the NSFW userscript</div>').insertAfter($(postMenu));
       });
     });
   });
