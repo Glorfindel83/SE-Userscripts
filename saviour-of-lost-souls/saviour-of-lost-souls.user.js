@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     0.1
+// @version     0.1.1
 // @match       *://meta.stackexchange.com/questions/*
 // @grant       none
 // ==/UserScript==
@@ -15,8 +15,8 @@
 
   // Check author reputation = 1
   let owner = $('div.post-signature.owner');
-  let reputation = parseInt(owner.find('span.reputation-score')[0].innerText);
-  if (reputation != 1) {
+  let reputation = owner.find('span.reputation-score')[0].innerText;
+  if (reputation != "1") {
     return;
   }
 
@@ -24,7 +24,8 @@
   let myReputation = parseInt($('a.my-profile div.-rep')[0].innerText.replace(/,/g, ''));
   if (myReputation < 5) {
     return;
-  }    
+  }
+  let isModerator = $("a.js-mod-inbox-button").length > 0;
   
   // Add post menu button
   let question = $('#question');
@@ -88,6 +89,7 @@
         url: "https://" + document.location.host + "/posts/" + postID + "/vote/3", // 3 = downvote
         data: "fkey=" + fkey,
         success: function () {
+          // TODO: set downvote button color
           console.log("Downvote cast.");
         },
         error: function (jqXHR, textStatus, errorThrown) {
@@ -103,6 +105,7 @@
         url: "https://" + document.location.host + "/flags/questions/" + postID + "/close/add",
         data: "fkey=" + fkey + "&closeReasonId=OffTopic&closeAsOffTopicReasonId=8",
         success: function () {
+          // TODO: update close vote count
           console.log("Close flag/vote cast.");
         },
         error: function (jqXHR, textStatus, errorThrown) {
@@ -110,13 +113,14 @@
           console.log("Error: " + textStatus + " " + errorThrown);
         }
       });
-    } else if (myReputation >= 20000) {
+    } else if (myReputation >= 20000 || isModerator) {
       // Delete vote
-      // TODO: only if score <= -3, maybe also if myReputation >= 10000 and question age >= 48 hours
+      // TODO, at least for non-moderators: only if score <= -3, maybe also if myReputation >= 10000 and question age >= 48 hours
       $.post({
         url: "https://" + document.location.host + "/posts/" + postID + "/vote/10", // 10 = delete
         data: "fkey=" + fkey,
         success: function () {
+          // TODO: update delete vote count
           console.log("Delete vote cast.");
         },
         error: function (jqXHR, textStatus, errorThrown) {
