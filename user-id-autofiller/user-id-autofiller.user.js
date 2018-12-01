@@ -7,6 +7,13 @@
 // @author      Glorfindel
 // @version     0.1
 // @match       *://data.stackexchange.com/*/query/*
+// @connect     *.stackexchange.com
+// @connect     *.stackoverflow.com
+// @connect     *.superuser.com
+// @connect     *.serverfault.com
+// @connect     *.askubuntu.com
+// @connect     *.mathoverflow.net
+// @connect     stackapps.com
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
@@ -27,7 +34,6 @@
                     url: 'https://stackexchange.com/users/current',
                     onload: function (data) {
                         let matches = /\/users\/(\d+)\//g.exec(data.finalUrl);
-                        // Fill input field
                         input.val(matches[1]);
                     }
                 });
@@ -60,7 +66,6 @@
                     url: 'https://' + site + '/users/current',
                     onload: function (data) {
                         let matches = /\/users\/(\d+)\//g.exec(data.finalUrl);
-                        // Fill input field
                         input.val(matches[1]);
                     }
                 });
