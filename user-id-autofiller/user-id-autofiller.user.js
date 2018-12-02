@@ -5,8 +5,9 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/user-id-autofiller/user-id-autofiller.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/user-id-autofiller/user-id-autofiller.user.js
 // @author      Glorfindel
-// @version     0.1
+// @version     0.2
 // @match       *://data.stackexchange.com/*/query/*
+// @connect     stackexchange.com
 // @connect     *.stackexchange.com
 // @connect     *.stackoverflow.com
 // @connect     *.superuser.com
