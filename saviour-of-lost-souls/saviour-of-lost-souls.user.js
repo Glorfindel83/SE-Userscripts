@@ -7,6 +7,7 @@
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @version     0.1.1
 // @match       *://meta.stackexchange.com/questions/*
+// @exclude     *://meta.stackexchange.com/questions/ask
 // @grant       none
 // ==/UserScript==
 
