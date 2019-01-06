@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/show-flag-responses/show-flag-responses.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/show-flag-responses/show-flag-responses.user.js
-// @version     0.1.1
+// @version     0.1.2
 // @match       *://*.stackexchange.com/admin/history/*
 // @match       *://*.stackoverflow.com/admin/history/*
 // @match       *://stackoverflow.com/admin/history/*
@@ -32,8 +32,12 @@
       // e.g. tag merges
       return;
     let href = link.attr("href");
-    let matches = (link.hasClass("question-hyperlink")
-                   ? /\/questions\/(\d+)\//g : /#(\d+)/g).exec(href);
+    let hrefRegex = (link.hasClass("question-hyperlink") ? /\/questions\/(\d+)\//g :
+                     link.hasClass("answer-hyperlink") ? /#(\d+)/g : null);
+    if (hrefRegex == null)
+      // e.g. moderator message
+      return;
+    let matches = hrefRegex.exec(href);
     let postID = parseInt(matches[1]);
     
     // Load Post Flag History page
