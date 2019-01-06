@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/show-flag-responses/show-flag-responses.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/show-flag-responses/show-flag-responses.user.js
-// @version     0.1.2
+// @version     0.1.3
 // @match       *://*.stackexchange.com/admin/history/*
 // @match       *://*.stackoverflow.com/admin/history/*
 // @match       *://stackoverflow.com/admin/history/*
@@ -53,13 +53,14 @@
       let feedback = lastCell.getAttribute("title");
       if (feedback == null || feedback.length == 0)
         return;
+      let decodedFeedback = new DOMParser().parseFromString(feedback, "text/html").documentElement.textContent;
       
       // Add feedback to each "Flag processed" entry
       post.find("li").each(function() {
         if (!this.innerText.startsWith("Flag processed"))
           return;
         let index = this.innerText.indexOf(") -");
-        this.innerText = this.innerText.substring(0, index) + ", " + feedback + this.innerText.substring(index);
+        this.innerText = this.innerText.substring(0, index) + ", " + decodedFeedback + this.innerText.substring(index);
       })
     });    
   });  
