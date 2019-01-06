@@ -19,7 +19,7 @@
   
   // Check if author is likely to be a lost soul
   let owner = $('div.post-signature.owner');
-  if (typeof owner == 'undefined')
+  if (owner.length == 0)
     // happens with Community Wiki posts
     return;
   let reputation = owner.find('span.reputation-score')[0].innerText;
