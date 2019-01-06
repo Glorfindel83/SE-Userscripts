@@ -5,20 +5,36 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     0.1.1
+// @version     0.2
 // @match       *://meta.stackexchange.com/questions/*
+// @match       *://meta.stackoverflow.com/questions/*
 // @exclude     *://meta.stackexchange.com/questions/ask
+// @exclude     *://meta.stackoverflow.com/questions/ask
 // @grant       none
 // ==/UserScript==
 
 (function () {
   "use strict";
-
-  // Check author reputation = 1
+  let question = $('#question');
+  
+  // Check if author is likely to be a lost soul
   let owner = $('div.post-signature.owner');
-  let reputation = owner.find('span.reputation-score')[0].innerText;
-  if (reputation != "1") {
+  if (typeof owner == 'undefined')
+    // happens with Community Wiki posts
     return;
+  let reputation = owner.find('span.reputation-score')[0].innerText;
+  if (document.location.host == 'meta.stackexchange.com') {
+    // Simple check: reputation = 1
+    if (reputation != "1")
+      return;
+  } else {
+    // Other meta sites require some reputation to post a question, so we need other rules:
+    let isNewContributor = owner.find('span.js-new-contributor-label').length > 0;
+    let hasLowReputation = reputation <= 101; // association bonus
+    let negativeQuestionScore = parseInt(question.find('div.js-vote-count').text()) < 0;
+    let numberOfReasons = (isNewContributor ? 1 : 0) + (hasLowReputation ? 1 : 0) + (negativeQuestionScore ? 1 : 0);
+    if (numberOfReasons < 2)
+      return;
   }
 
   // My reputation; you need 5 reputation to comment
@@ -29,7 +45,6 @@
   let isModerator = $("a.js-mod-inbox-button").length > 0;
   
   // Add post menu button
-  let question = $('#question');
   let menu = question.find('div.post-menu');
   menu.append($('<span class="lsep">|</span>'));
   let button = $('<a href="#" title="down-/close-/delete vote and post a welcoming comment">lost soul</a>');
