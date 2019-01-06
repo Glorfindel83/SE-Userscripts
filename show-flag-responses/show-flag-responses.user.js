@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/show-flag-responses/show-flag-responses.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/show-flag-responses/show-flag-responses.user.js
-// @version     0.1
+// @version     0.1.1
 // @match       *://*.stackexchange.com/admin/history/*
 // @match       *://*.stackoverflow.com/admin/history/*
 // @match       *://stackoverflow.com/admin/history/*
@@ -37,7 +37,7 @@
     let postID = parseInt(matches[1]);
     
     // Load Post Flag History page
-    $.get("https://apple.stackexchange.com/admin/posts/" + postID + "/show-flags", function(data) {
+    $.get("https://" + document.location.host + "/admin/posts/" + postID + "/show-flags", function(data) {
       // Search for rows corresponding to the time of handling
       let deletionDate = $(data).find("span[title='" + time + "']");
       if (deletionDate.length == 0)
