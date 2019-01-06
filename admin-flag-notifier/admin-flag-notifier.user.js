@@ -8,11 +8,12 @@
 // @version     0.2
 // @match       *://*.stackexchange.com/admin/dashboard*
 // @match       *://*.stackoverflow.com/admin/dashboard*
-// @match       *://*.superuser.com/admin/dashboard*
-// @match       *://*.serverfault.com/admin/dashboard*
-// @match       *://*.askubuntu.com/admin/dashboard*
-// @match       *://*.stackapps.com/admin/dashboard*
-// @match       *://*.mathoverflow.net/admin/dashboard*
+// @match       *://stackoverflow.com/admin/dashboard*
+// @match       *://superuser.com/admin/dashboard*
+// @match       *://serverfault.com/admin/dashboard*
+// @match       *://askubuntu.com/admin/dashboard*
+// @match       *://stackapps.com/admin/dashboard*
+// @match       *://mathoverflow.net/admin/dashboard*
 // @grant       none
 // ==/UserScript==
 

@@ -3,14 +3,15 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.4.4
+// @version     0.4.5
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
-// @match       *://*.superuser.com/users/*
-// @match       *://*.serverfault.com/users/*
-// @match       *://*.askubuntu.com/users/*
-// @match       *://*.stackapps.com/users/*
-// @match       *://*.mathoverflow.net/users/*
+// @match       *://stackoverflow.com/users/*
+// @match       *://superuser.com/users/*
+// @match       *://serverfault.com/users/*
+// @match       *://askubuntu.com/users/*
+// @match       *://stackapps.com/users/*
+// @match       *://mathoverflow.net/users/*
 // @grant       none
 // ==/UserScript==
 (function () {
