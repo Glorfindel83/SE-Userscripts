@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     0.2
+// @version     0.3
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @exclude     *://meta.stackexchange.com/questions/ask
@@ -13,20 +13,18 @@
 // @grant       none
 // ==/UserScript==
 
-(function () {
+(function ($) {
   "use strict";
   let question = $('#question');
-  
+
   // Check if author is likely to be a lost soul
   let owner = $('div.post-signature.owner');
   if (owner.length == 0)
     // happens with Community Wiki posts
     return;
   let reputation = owner.find('span.reputation-score')[0].innerText;
-  if (document.location.host == 'meta.stackexchange.com') {
-    // Simple check: reputation = 1
-    if (reputation != "1")
-      return;
+  if (reputation === "1") {
+    // Do nothing: 1 rep qualifies for a lost soul
   } else {
     // Other meta sites require some reputation to post a question, so we need other rules:
     let isNewContributor = owner.find('span.js-new-contributor-label').length > 0;
@@ -43,7 +41,7 @@
     return;
   }
   let isModerator = $("a.js-mod-inbox-button").length > 0;
-  
+
   // Add post menu button
   let menu = question.find('div.post-menu');
   menu.append($('<span class="lsep">|</span>'));
@@ -52,7 +50,7 @@
   button.click(function() {
     if (!confirm('Are you sure you want to down-/close-/delete vote and post a welcoming comment?'))
       return;
-    
+
     // Downvoted?
     let downvoted = question.find('a.vote-down-on').length > 0;
 
@@ -60,12 +58,12 @@
     let status = $('div.question-status h2 b');
     let statusText = status.length > 0 ? status[0].innerText : '';
     let closed = statusText == 'marked' || statusText == 'put on hold' || statusText == 'closed';
-    
+
     // Prepare votes/comments
     let postID = parseInt(question.attr('data-questionid'));
     console.log('Lost soul #' + postID);
     let fkey = window.localStorage["se:fkey"].split(",")[0];
-    
+
     // Is there any comment not by the author?
     let comments = question.find('ul.comments-list');
     var nonOwnerComment = false;
@@ -94,10 +92,10 @@
         }
       });
     }
-    
+
     // You can't flag without 15 rep
     if (myReputation < 15)
-      return;    
+      return;
 
     if (myReputation >= 100 && !downvoted) {
       // Downvote
@@ -114,7 +112,7 @@
         }
       });
     }
-    
+
     if (!closed) {
       // Flag/vote to close (doesn't matter for the API call)
       $.post({
@@ -145,7 +143,7 @@
         }
       });
     }
-    
+
     // TODO: reload page after all calls are finished
-  });  
-})();
+  });
+})(window.jQuery);
