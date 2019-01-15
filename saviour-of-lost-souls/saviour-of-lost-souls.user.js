@@ -144,6 +144,6 @@
       });
     }
 
-    window.location.reload(false);
+    window.setTimeout(() => window.location.reload(false), 800);
   });
 })(window.jQuery);
