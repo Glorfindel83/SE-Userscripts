@@ -94,6 +94,17 @@
         }
       });
     }
+
+    // Upvote all comments containing "welcome to"
+    comments.find("li").each(function() {
+      if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") >= 0) {
+        // Click the "up" triangle
+        let upButtons = $(this).find("a.comment-up");
+        if (upButtons.length > 0) {
+          upButtons[0].click();
+        }
+      }
+    });
     
     // You can't flag without 15 rep
     if (myReputation < 15)
