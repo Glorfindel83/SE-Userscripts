@@ -26,7 +26,7 @@
   if (reputation === "1") {
     // Do nothing: 1 rep qualifies for a lost soul
   } else {
-    // Other meta sites require some reputation to post a question, so we need other rules:
+    // Child meta sites require some reputation to post a question, so we need other rules:
     let isNewContributor = owner.find('span.js-new-contributor-label').length > 0;
     let hasLowReputation = reputation <= 101; // association bonus
     let negativeQuestionScore = parseInt(question.find('div.js-vote-count').text()) < 0;
@@ -144,6 +144,7 @@
       });
     }
 
+    // Reload page; this is less elegant than waiting for all POST calls but it works.
     window.setTimeout(() => window.location.reload(false), 800);
   });
 })(window.jQuery);
