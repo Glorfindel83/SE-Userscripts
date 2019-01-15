@@ -144,6 +144,6 @@
       });
     }
 
-    // TODO: reload page after all calls are finished
+    window.location.reload(false);
   });
 })(window.jQuery);
