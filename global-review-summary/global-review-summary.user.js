@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Stack Exchange Global Review Summary
-// @version       0.2
+// @version       0.3
 // @description   Stack Exchange network wide review summary available in your network profile
 // @author        Glorfindel
 // @attribution   Floern (https://github.com/Floern)
@@ -179,10 +179,13 @@ function showGlobalReviewSummaryLink() {
     if (tabs != null) {
         tabs.appendChild(link);
     } else {
-        var header = document.querySelector('#content .subheader');
-        header.setAttribute('style', 'display: table');
-        link.setAttribute('style', 'padding-left: 20px; display: table-cell; vertical-align: middle;');
-        header.appendChild(link);
+        let header = document.querySelector('#content h1.fs-headline1');
+        let button = $(`<div class="pl8 grid--cell" role="navigation">
+    <a href="//stackexchange.com/users/current?tab=reviews" class="d-inline-flex ai-center ws-nowrap s-btn s-btn__filled">
+        Global Review Summary
+    </a>
+</div>`);
+        button.insertAfter(header);
     }
 }
 
