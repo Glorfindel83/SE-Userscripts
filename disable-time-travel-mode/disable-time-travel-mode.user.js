@@ -19,10 +19,11 @@
 // @exclude     *://openid.stackexchange.com/*
 // @exclude     *://stackexchange.com/*
 // @grant       none
-// @version     0.1
+// @version     0.2
 // ==/UserScript==
 
 (function () {
   "use strict";
   $.cookie("tm2019", "1", { expires: 2, path: '/' });
+  $.cookie("tm2019d", "1", { expires: 2, path: '/' });
 })()
