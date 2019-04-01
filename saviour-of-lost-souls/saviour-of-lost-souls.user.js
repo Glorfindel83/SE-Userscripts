@@ -5,11 +5,13 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     0.3
+// @version     0.4
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
+// @match       *://softwarerecs.stackexchange.com/questions/*
 // @exclude     *://meta.stackexchange.com/questions/ask
 // @exclude     *://meta.stackoverflow.com/questions/ask
+// @exclude     *://softwarerecs.stackexchange.com/questions/ask
 // @grant       none
 // ==/UserScript==
 
@@ -75,11 +77,15 @@
     if (!nonOwnerComment) {
       // Post comment
       let author = owner.find('div.user-details a')[0].innerText;
-      let comment = "Hi " + author + ", welcome to Meta! " +
-        "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
-        "To get an answer from users that have the expertise about the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
-        "Check [How do I ask a good question](/help/how-to-ask) and [What is on topic](/help/on-topic) on the *target* site to make sure your post is in good shape. " +
-        "Your question is definitely off-topic on [Meta](/help/whats-meta) and is better deleted here.";
+      
+      let comment = window.location.host === "softwarerecs.stackexchange.com"
+       ? ("Hi " + author + ", welcome to [softwarerecs.se]! " +
+          "This question does not appear to be about software recommendations, within [the scope defined on meta](https://softwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic).")
+       : ("Hi " + author + ", welcome to Meta! " +
+          "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
+          "To get an answer from users that have the expertise about the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
+          "Check [How do I ask a good question](/help/how-to-ask) and [What is on topic](/help/on-topic) on the *target* site to make sure your post is in good shape. " +
+          "Your question is definitely off-topic on [Meta](/help/whats-meta) and is better deleted here.");
       $.post({
         url: "https://" + document.location.host + "/posts/" + postID + "/comments",
         data: "fkey=" + fkey + "&comment=" + encodeURI(comment),
@@ -128,7 +134,7 @@
       // Flag/vote to close (doesn't matter for the API call)
       $.post({
         url: "https://" + document.location.host + "/flags/questions/" + postID + "/close/add",
-        data: "fkey=" + fkey + "&closeReasonId=OffTopic&closeAsOffTopicReasonId=8",
+        data: "fkey=" + fkey + "&closeReasonId=OffTopic&closeAsOffTopicReasonId=" + (window.location.host === "softwarerecs.stackexchange.com" ? "5" : "8"),
         success: function () {
           // TODO: update close vote count
           console.log("Close flag/vote cast.");
