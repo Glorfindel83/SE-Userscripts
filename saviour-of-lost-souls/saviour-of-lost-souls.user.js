@@ -5,22 +5,42 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     0.4
+// @version     0.5
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
+// @match       *://softwarerecs.stackexchange.com/review/first-posts/*
+// @match       *://hardwarerecs.stackexchange.com/questions/*
+// @match       *://hardwarerecs.stackexchange.com/review/first-posts/*
 // @exclude     *://meta.stackexchange.com/questions/ask
 // @exclude     *://meta.stackoverflow.com/questions/ask
 // @exclude     *://softwarerecs.stackexchange.com/questions/ask
+// @exclude     *://hardwarerecs.stackexchange.com/questions/ask
 // @grant       none
+// @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
+/* global $, waitForKeyElements */
 
 (function ($) {
   "use strict";
+  
+  // Find question (works when on Q&A page)
   let question = $('#question');
+  if (question.length == 0)
+    return;
 
+  main(question);  
+})(window.jQuery);
+
+// Wait for question (works when in review queue)
+waitForKeyElements('div.review-content div.question', function(jNode) {
+  main(jNode);
+});
+
+function main(question) {
+  console.log(question)
   // Check if author is likely to be a lost soul
-  let owner = $('div.post-signature.owner');
+  let owner = question.find('div.post-signature.owner');
   if (owner.length == 0)
     // happens with Community Wiki posts
     return;
@@ -81,6 +101,9 @@
       let comment = window.location.host === "softwarerecs.stackexchange.com"
        ? ("Hi " + author + ", welcome to [softwarerecs.se]! " +
           "This question does not appear to be about software recommendations, within [the scope defined on meta](https://softwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic).")
+       : window.location.host === "hardwarerecs.stackexchange.com"
+       ? ("Hi " + author + ", welcome to [hardwarerecs.se]! " +
+          "This question does not appear to be about hardware recommendations, within [the scope defined on meta](https://hardwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic).")
        : ("Hi " + author + ", welcome to Meta! " +
           "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
           "To get an answer from users that have the expertise about the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
@@ -134,7 +157,8 @@
       // Flag/vote to close (doesn't matter for the API call)
       $.post({
         url: "https://" + document.location.host + "/flags/questions/" + postID + "/close/add",
-        data: "fkey=" + fkey + "&closeReasonId=OffTopic&closeAsOffTopicReasonId=" + (window.location.host === "softwarerecs.stackexchange.com" ? "5" : "8"),
+        data: "fkey=" + fkey + "&closeReasonId=OffTopic&closeAsOffTopicReasonId=" + (window.location.host === "softwarerecs.stackexchange.com" ||
+                                                                                     window.location.host === "hardwarerecs.stackexchange.com" ? "1" : "8"),
         success: function () {
           // TODO: update close vote count
           console.log("Close flag/vote cast.");
@@ -164,4 +188,4 @@
     // Reload page; this is less elegant than waiting for all POST calls but it works.
     window.setTimeout(() => window.location.reload(false), 800);
   });
-})(window.jQuery);
+}
