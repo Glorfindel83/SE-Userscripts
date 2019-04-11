@@ -5,13 +5,13 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     0.5
+// @version     0.5.1
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
-// @match       *://softwarerecs.stackexchange.com/review/first-posts/*
+// @match       *://softwarerecs.stackexchange.com/review/first-posts*
 // @match       *://hardwarerecs.stackexchange.com/questions/*
-// @match       *://hardwarerecs.stackexchange.com/review/first-posts/*
+// @match       *://hardwarerecs.stackexchange.com/review/first-posts*
 // @exclude     *://meta.stackexchange.com/questions/ask
 // @exclude     *://meta.stackoverflow.com/questions/ask
 // @exclude     *://softwarerecs.stackexchange.com/questions/ask
