@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name        'Saviour' of Lost Souls
 // @namespace   https://github.com/Glorfindel83/
-// @description Adds a shortcut to down-/close-/delete vote and post a welcoming comment to Lost Souls on Meta Stack Exchange.
+// @description Adds a shortcut to down-/close-/delete vote and post a welcoming comment to Lost Souls on Meta Stack Exchange and some other sites.
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     0.5.1
+// @version     0.5.2
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -100,10 +100,12 @@ function main(question) {
       
       let comment = window.location.host === "softwarerecs.stackexchange.com"
        ? ("Hi " + author + ", welcome to [softwarerecs.se]! " +
-          "This question does not appear to be about software recommendations, within [the scope defined on meta](https://softwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic).")
+          "This question does not appear to be about software recommendations, within [the scope defined on meta](https://softwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic). " +
+          "If you think you can [edit] it to become on-topic, please have a look at the [question quality guidelines](https://softwarerecs.meta.stackexchange.com/q/336/23377).")
        : window.location.host === "hardwarerecs.stackexchange.com"
        ? ("Hi " + author + ", welcome to [hardwarerecs.se]! " +
-          "This question does not appear to be about hardware recommendations, within [the scope defined on meta](https://hardwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic).")
+          "This question does not appear to be about hardware recommendations, within [the scope defined on meta](https://hardwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic)." +
+          "If you think you can [edit] it to become on-topic, please have a look at the [question quality guidelines](https://hardwarerecs.meta.stackexchange.com/q/205/4495).")
        : ("Hi " + author + ", welcome to Meta! " +
           "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
           "To get an answer from users that have the expertise about the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
@@ -189,3 +191,4 @@ function main(question) {
     window.setTimeout(() => window.location.reload(false), 800);
   });
 }
+
