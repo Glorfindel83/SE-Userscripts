@@ -5,15 +5,19 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/admin-flag-notifier/admin-flag-notifier.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/admin-flag-notifier/admin-flag-notifier.user.js
-// @version     0.2
+// @version     0.3
 // @match       *://*.stackexchange.com/admin/dashboard*
-// @match       *://*.stackoverflow.com/admin/dashboard*
 // @match       *://stackoverflow.com/admin/dashboard*
+// @match       *://*.stackoverflow.com/admin/dashboard*
 // @match       *://superuser.com/admin/dashboard*
+// @match       *://*.superuser.com/admin/dashboard*
 // @match       *://serverfault.com/admin/dashboard*
+// @match       *://*.serverfault.com/admin/dashboard*
 // @match       *://askubuntu.com/admin/dashboard*
-// @match       *://stackapps.com/admin/dashboard*
+// @match       *://*.askubuntu.com/admin/dashboard*
+// @match       *://*.stackapps.com/admin/dashboard*
 // @match       *://mathoverflow.net/admin/dashboard*
+// @match       *://*.mathoverflow.net/admin/dashboard*
 // @grant       none
 // ==/UserScript==
 
@@ -33,7 +37,11 @@
   console.log("Current: " + currentFlags);
 
   setInterval(function () {
-    var url = 'https://' + host + '/admin/dashboard?filtered=' + !document.getElementById("chk-apply-filters").checked;
+    let checkbox = document.getElementById("chk-apply-filters");
+    if (checkbox == null) {
+      checkbox = document.getElementsByClassName("js-toggle-apply-filters")[0];
+    }
+    var url = 'https://' + host + '/admin/dashboard?filtered=' + !checkbox.checked;
     console.log("Calling: " + url);
     $.get(url, function (data) {
       var updatedTitle = $("<html/>").html(data).find("title").text();
