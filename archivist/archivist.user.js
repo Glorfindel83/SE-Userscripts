@@ -70,7 +70,7 @@
       if (!confirm('Are you sure you want to archive ' + message + ' in this post?'))
         return;
     
-      links.forEach(function(link) {
+      links.concat(images).forEach(function(link) {
         // only works properly if the browser is configured to
         // allow stackexchange.com to open (multiple) popups
         window.open("https://web.archive.org/save/" + link, "_blank");
