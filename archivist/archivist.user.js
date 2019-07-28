@@ -51,7 +51,7 @@
     });
     // Are there any links to archive?
     let disabled = links.length == 0 && images.length == 0;
-    let hoverMessage = disabled ? 'No external links or images found.' : 'Archive ' + getMessage(links, images, true);
+    let hoverMessage = disabled ? 'No external links or images found.' : 'Archive ' + getMessage(links, images, false);
 
     // Add button
     let menu = shareButton.parent();
@@ -66,7 +66,7 @@
       }
       
       // TODO: overview of age of last snapshots, with checkmarks
-      let message = getMessage(links, images, false);
+      let message = getMessage(links, images, true);
       if (!confirm('Are you sure you want to archive ' + message + ' in this post?'))
         return;
     
