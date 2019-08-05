@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
-// @version     0.1.1
+// @version     0.2
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -20,7 +20,10 @@
 // @exclude     *://*.askubuntu.com/questions/ask
 // @exclude     *://*.stackapps.com/questions/ask
 // @exclude     *://*.mathoverflow.net/questions/ask
-// @grant       none
+// @connect     web.archive.org
+// @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
+// @grant       GM_xmlhttpRequest
+// @grant       GM.xmlHttpRequest
 // ==/UserScript==
 
 (function () {
@@ -58,7 +61,8 @@
     menu.append($('<span class="lsep">|</span>'));
     let button = $('<a href="#" style="' + (disabled ? "color: #BBB" : "") + '" title="' + hoverMessage + '">archive</a>');
     menu.append(button);
-    button.click(function(event) {
+    
+    function startArchiving(event) {
       event.preventDefault();
       if (disabled) {
         alert(hoverMessage);
@@ -69,13 +73,69 @@
       let message = getMessage(links, images, true);
       if (!confirm('Are you sure you want to archive ' + message + ' in this post?'))
         return;
-    
-      new Set(function*() { yield* links; yield* images; }()).forEach(function(link) {
-        // only works properly if the browser is configured to
-        // allow stackexchange.com to open (multiple) popups
-        window.open("https://web.archive.org/save/" + link, "_blank");
-      });
-    });
+
+      // Disable further clicks - the button becomes a progress indicator
+      button.off('click', startArchiving);
+      button.on('click', function(e) { e.preventDefault(); });
+      button.css("color", "#BBB");
+      button.removeAttr("title");
+      button.text("archiving ...");
+      
+      let linksToArchive = Array.from(links).concat(Array.from(images));
+      var index = -1, successCount = 0, failureCount = 0;
+      function next(success) {
+        // Success?
+        if (typeof success != 'undefined') {
+          if (success) {
+            successCount++;
+          } else {
+            failureCount++;
+          }
+        }
+        
+        // Archive next link
+        if (++index < linksToArchive.length) {
+          archive(); 
+        }
+        
+        // Update archive button
+        let totalCount = successCount + failureCount;
+        if (totalCount < linksToArchive.length) {
+          button.text("archiving ... (" + totalCount + "/" + linksToArchive.length + ")");
+        } else if (failureCount == 0) {
+          button.text("archiving finished!");
+        } else {
+          button.text("archiving finished! (" + failureCount + " link" + (failureCount > 1 ? "s" : "") + " failed)");
+        }
+      }
+      
+      function archive() {
+        let link = linksToArchive[index];
+        console.log("Archiving: " + link);
+        // Call Wayback Machine
+        let archiveLink = "https://web.archive.org/save/" + link;
+        GM.xmlHttpRequest({
+          method: 'GET',
+          url: archiveLink,
+          onload: function (response) {
+            console.log("Saved: " + link);
+            next(true);
+          },
+          onerror: function(response) {
+            console.log(["An error occurred while calling: " + archiveLink,
+                         response.status, response.statusText, response.readyState,
+                         response.responseHeaders, response.responseText, response.finalUrl].join("\n"));
+            next(false);
+          }
+        });
+      }
+      
+      // Parallelize archiving over multiple threads
+      for (var i = 0; i < 5; i++) {
+        next();
+      }
+    }
+    button.on('click', startArchiving);
   });  
 })();
 
