@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
-// @version     0.1
+// @version     0.1.1
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -35,22 +35,22 @@
       post = shareButton.parents("div.answer")[0];
     }
     let body = $(post).find("div.post-text")[0];
-    var images = [];
+    var images = new Set();
     $(body).find("img").each(function() {
       let tmp = document.createElement('a');
       tmp.href = this.src;
       if (shouldArchive(tmp.hostname)) {
-        images.push(this.src);
+        images.add(this.src);
       }
     });
-    var links = [];
+    var links = new Set();
     $(body).find("a").each(function() {
-      if (shouldArchive(this.hostname) && !images.includes(this.href)) {
-        links.push(this.href);
+      if (shouldArchive(this.hostname) && !images.has(this.href)) {
+        links.add(this.href);
       }
     });
     // Are there any links to archive?
-    let disabled = links.length == 0 && images.length == 0;
+    let disabled = links.size == 0 && images.size == 0;
     let hoverMessage = disabled ? 'No external links or images found.' : 'Archive ' + getMessage(links, images, false);
 
     // Add button
@@ -70,7 +70,7 @@
       if (!confirm('Are you sure you want to archive ' + message + ' in this post?'))
         return;
     
-      links.concat(images).forEach(function(link) {
+      new Set(function*() { yield* links; yield* images; }()).forEach(function(link) {
         // only works properly if the browser is configured to
         // allow stackexchange.com to open (multiple) popups
         window.open("https://web.archive.org/save/" + link, "_blank");
@@ -80,8 +80,8 @@
 })();
 
 function getMessage(links, images, use1) {
-  let linksMessage = getMessagePart("link", links.length, use1);
-  let imagesMessage = getMessagePart("image", images.length, use1);
+  let linksMessage = getMessagePart("link", links.size, use1);
+  let imagesMessage = getMessagePart("image", images.size, use1);
   return linksMessage + (linksMessage != "" && imagesMessage != "" ? " and " : "") + imagesMessage;  
 }
 
