@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name        Stack Exchange Pronoun Assistant
 // @namespace   https://github.com/Glorfindel83/
-// @description Displays users' pronouns
+// @description Displays users' pronouns (mentioned in their profiles) in chat
+// @author      Glorfindel
+// @contributor ArtOfCode
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
-// @version     0.1
+// @version     0.2
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -18,26 +20,51 @@
 // @exclude     *://elections.stackexchange.com/*
 // @exclude     *://openid.stackexchange.com/*
 // @exclude     *://stackexchange.com/*
-// @grant       none
+// @grant       GM_addStyle
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
 
 /* global $ */
 
-let pronouns = [
+GM_addStyle(`
+.tiny-signature {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  align-items: center;
+}
+
+.username {
+  height: unset !important;
+}
+
+.pronouns {
+  color: #777;
+}
+`)
+
+// List of pronouns to look out for
+let allPronouns = [
   "he", "him", "his",
   "she", "her",
-  "they", "them",
+  "they", "them", "their",
   "ze", "hir", "zir",
   "xey", "xem", "xyr"
 ];
+// Regex to detect instances where users put the pronouns inside parentheses etc.,
+// e.g. (he/him)
 let pronounsComponent = /^[^\w\/]*([\w\/]+)[^\w\/]*$/;
+
+// Keys: user IDs
+// Values: either a list of DOM elements (specifically, the anchors to chat profiles)
+//         or a string with pronouns.
 var users = {};
 
-function addInformation(element, information) {
-  if (information != "") {
-    element.append($("<span>" + information + "</span>"));
-  }
+function addPronouns(element, pronouns) {
+  if (pronouns == "")
+    return;
+  let usernameElement = element.find("div.username")[0];
+  usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
+    + '<span class="pronouns">' + pronouns + '</span>';
 }
 
 if (window.location.host.startsWith("chat.")) {
@@ -47,7 +74,7 @@ if (window.location.host.startsWith("chat.")) {
       users[userID] = [];
       users[userID].push(jNode);
       $.get("https://chat.stackexchange.com/users/thumbs/" + userID + "?showUsage=true", function(data) {
-        var information = "";
+        var pronouns = "";
         if (data.user_message != null) {
           // Check the user's 'about' in their chat profile for pronouns (see above for the list)
           // joined by a forward slash.
@@ -60,26 +87,29 @@ if (window.location.host.startsWith("chat.")) {
           for (let component of data.user_message.split(/\s+/)) {
             if (!component.includes("/"))
               continue;
-            var allPronouns = true;
-            for (let word of pronounsComponent.exec(component)[1].split("/")) {
-              if (!pronouns.includes(word.toLowerCase())) {
-                allPronouns = false;
+            let match = pronounsComponent.exec(component);
+            if (match == null)
+              continue;
+            var isAllPronouns = true;
+            for (let word of match[1].split("/")) {
+              if (!allPronouns.includes(word.toLowerCase())) {
+                isAllPronouns = false;
                 break;
               }
             };
-            if (allPronouns) {
-              information = component;
+            if (isAllPronouns) {
+              pronouns = component;
               break;
             }
           }          
         }        
         users[userID].forEach(function (element) {
-          addInformation(element, information);
+          addPronouns(element, pronouns);
         });
-        users[userID] = information;
+        users[userID] = pronouns;
       });
     } else if (typeof users[userID] == 'string') {
-      addInformation(jNode, users[userID]);
+      addPronouns(jNode, users[userID]);
     } else {
       users[userID].push(jNode);
     }
