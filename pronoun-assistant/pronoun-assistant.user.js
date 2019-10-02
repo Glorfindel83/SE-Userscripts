@@ -6,7 +6,7 @@
 // @contributor ArtOfCode
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
-// @version     0.2
+// @version     0.3
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -58,58 +58,65 @@ let pronounsComponent = /^[^\w\/]*([\w\/]+)[^\w\/]*$/;
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
 //         or a string with pronouns.
 var users = {};
+// TODO: cache in local storage
 
-function addPronouns(element, pronouns) {
+// Adds pronoun information to a user's 'signature' in chat.
+function showPronouns(element, pronouns) {
   if (pronouns == "")
     return;
-  let usernameElement = element.find("div.username")[0];
-  usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
-    + '<span class="pronouns">' + pronouns + '</span>';
+  // the element might contain both a tiny and a full signature
+  element.find("div.username").each(function (index, usernameElement) {
+    usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
+      + '<span class="pronouns">' + pronouns + '</span>';
+  });
 }
 
+// Check the user's 'about' in their chat profile for pronouns (see above for the list)
+// joined by a forward slash.
+// 
+// Examples of what would be detected:
+// - "They/them"
+// - "(he/him/his)"
+// Examples of what would *not* be detected (yet):
+// - "they / them"
+function getPronouns(aboutMe) {
+  for (let component of aboutMe.split(/\s+/)) {
+    if (!component.includes("/"))
+      continue;
+    let match = pronounsComponent.exec(component);
+    if (match == null)
+      continue;
+    var isOnlyPronouns = true;
+    for (let word of match[1].split("/")) {
+      if (!allPronouns.includes(word.toLowerCase())) {
+        isOnlyPronouns = false;
+        break;
+      }
+    };
+    if (isOnlyPronouns)
+      return match[1];
+  }
+  return ""
+}
+
+// NICETOHAVE: on main/meta sites as well; right now, there are very few users
+// who have indicated their pronouns in their main/meta profile.
 if (window.location.host.startsWith("chat.")) {
   waitForKeyElements("a.signature", function(jNode) {
     let userID = jNode.attr("href").split("/users/")[1];
     if (!users.hasOwnProperty(userID)) {
       users[userID] = [];
       users[userID].push(jNode);
+      // Read chat profile
       $.get("https://chat.stackexchange.com/users/thumbs/" + userID + "?showUsage=true", function(data) {
-        var pronouns = "";
-        if (data.user_message != null) {
-          // Check the user's 'about' in their chat profile for pronouns (see above for the list)
-          // joined by a forward slash.
-          // 
-          // Examples of what would be detected:
-          // - They/them
-          // - (he/him/his)
-          // Examples of what would *not* be detected (yet):
-          // - they / them
-          for (let component of data.user_message.split(/\s+/)) {
-            if (!component.includes("/"))
-              continue;
-            let match = pronounsComponent.exec(component);
-            if (match == null)
-              continue;
-            var isAllPronouns = true;
-            for (let word of match[1].split("/")) {
-              if (!allPronouns.includes(word.toLowerCase())) {
-                isAllPronouns = false;
-                break;
-              }
-            };
-            if (isAllPronouns) {
-              pronouns = component;
-              break;
-            }
-          }          
-        }        
+        let pronouns = data.user_message == null ? "" : getPronouns(data.user_message);         
         users[userID].forEach(function (element) {
-          addPronouns(element, pronouns);
+          showPronouns(element, pronouns);
         });
         users[userID] = pronouns;
       });
     } else if (typeof users[userID] == 'string') {
-      addPronouns(jNode, users[userID]);
+      showPronouns(jNode, users[userID]);
     } else {
       users[userID].push(jNode);
     }
