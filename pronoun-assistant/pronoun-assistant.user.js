@@ -6,25 +6,19 @@
 // @contributor ArtOfCode
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
-// @version     0.3
-// @match       *://*.stackexchange.com/*
-// @match       *://*.stackoverflow.com/*
-// @match       *://*.superuser.com/*
-// @match       *://*.serverfault.com/*
-// @match       *://*.askubuntu.com/*
-// @match       *://*.stackapps.com/*
-// @match       *://*.mathoverflow.net/*
-// @exclude     *://api.stackexchange.com/*
-// @exclude     *://blog.*.com/*
-// @exclude     *://data.stackexchange.com/*
-// @exclude     *://elections.stackexchange.com/*
-// @exclude     *://openid.stackexchange.com/*
-// @exclude     *://stackexchange.com/*
+// @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
+// @version     1.0
+// @match       *://chat.stackexchange.com/rooms/*
+// @match       *://chat.stackoverflow.com/rooms/*
+// @match       *://chat.meta.stackexchange.com/rooms/*
 // @grant       GM_addStyle
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
 
 /* global $ */
+
+// NICETOHAVE: on main/meta sites as well; right now, there are very few users
+// who have indicated their pronouns in their main/meta profile.
 
 GM_addStyle(`
 .tiny-signature {
@@ -96,29 +90,25 @@ function getPronouns(aboutMe) {
     if (isOnlyPronouns)
       return match[1];
   }
-  return ""
+  return "";
 }
 
-// NICETOHAVE: on main/meta sites as well; right now, there are very few users
-// who have indicated their pronouns in their main/meta profile.
-if (window.location.host.startsWith("chat.")) {
-  waitForKeyElements("a.signature", function(jNode) {
-    let userID = jNode.attr("href").split("/users/")[1];
-    if (!users.hasOwnProperty(userID)) {
-      users[userID] = [];
-      users[userID].push(jNode);
-      // Read chat profile
-      $.get("https://chat.stackexchange.com/users/thumbs/" + userID + "?showUsage=true", function(data) {
-        let pronouns = data.user_message == null ? "" : getPronouns(data.user_message);         
-        users[userID].forEach(function (element) {
-          showPronouns(element, pronouns);
-        });
-        users[userID] = pronouns;
+waitForKeyElements("a.signature", function(jNode) {
+  let userID = jNode.attr("href").split("/users/")[1];
+  if (!users.hasOwnProperty(userID)) {
+    users[userID] = [];
+    users[userID].push(jNode);
+    // Read chat profile
+    $.get("https://chat.stackexchange.com/users/thumbs/" + userID + "?showUsage=true", function(data) {
+      let pronouns = data.user_message == null ? "" : getPronouns(data.user_message);
+      users[userID].forEach(function (element) {
+        showPronouns(element, pronouns);
       });
-    } else if (typeof users[userID] == 'string') {
-      showPronouns(jNode, users[userID]);
-    } else {
-      users[userID].push(jNode);
-    }
-  });
-}
+      users[userID] = pronouns;
+    });
+  } else if (typeof users[userID] == 'string') {
+    showPronouns(jNode, users[userID]);
+  } else {
+    users[userID].push(jNode);
+  }
+});
