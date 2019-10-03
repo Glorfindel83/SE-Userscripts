@@ -7,7 +7,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     1.0
+// @version     1.1
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -15,7 +15,7 @@
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
 
-/* global $ */
+/* global $, waitForKeyElements */
 
 // NICETOHAVE: on main/meta sites as well; right now, there are very few users
 // who have indicated their pronouns in their main/meta profile.
@@ -38,17 +38,17 @@ GM_addStyle(`
 
 // List of pronouns to look out for
 let allPronouns = [
-  "he", "him", "his",
-  "she", "her",
+  "him", "his",
+  "she", "her?", // that covers 'he' as well
   "they", "them", "their",
   "ze", "hir", "zir",
   "xey", "xem", "xyr"
-];
-// Regex to detect instances where users put the pronouns inside parentheses etc.,
-// e.g. (he/him)
-let pronounsComponent = /^[^\w\/]*([\w\/]+)[^\w\/]*$/;
+].join("|");
+let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
+let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/[\w/]+/i;
+let explicitPronounsRegex = /pronouns:\s*([^.]*)\./i;
 
-// Keys: user IDs
+// Keys:   user IDs
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
 //         or a string with pronouns.
 var users = {};
@@ -56,8 +56,9 @@ var users = {};
 
 // Adds pronoun information to a user's 'signature' in chat.
 function showPronouns(element, pronouns) {
-  if (pronouns == "")
+  if (pronouns == "") {
     return;
+  }
   // the element might contain both a tiny and a full signature
   element.find("div.username").each(function (index, usernameElement) {
     usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
@@ -65,31 +66,33 @@ function showPronouns(element, pronouns) {
   });
 }
 
-// Check the user's 'about' in their chat profile for pronouns (see above for the list)
-// joined by a forward slash.
-// 
-// Examples of what would be detected:
-// - "They/them"
-// - "(he/him/his)"
-// Examples of what would *not* be detected (yet):
-// - "they / them"
+// Check the user's 'about' in their chat profile for pronoun indicators
 function getPronouns(aboutMe) {
-  for (let component of aboutMe.split(/\s+/)) {
-    if (!component.includes("/"))
-      continue;
-    let match = pronounsComponent.exec(component);
-    if (match == null)
-      continue;
-    var isOnlyPronouns = true;
-    for (let word of match[1].split("/")) {
-      if (!allPronouns.includes(word.toLowerCase())) {
-        isOnlyPronouns = false;
-        break;
-      }
-    };
-    if (isOnlyPronouns)
-      return match[1];
+  // Link to Pronoun Island, e.g.
+  // http://my.pronoun.is/she
+  var match = myPronounIsRegex.exec(aboutMe);
+  if (match != null) {
+    return match[0];
   }
+
+  // Explicit pronouns specification, e.g.
+  // Pronouns: he/him.
+  // (the trailing dot is important)
+  match = explicitPronounsRegex.exec(aboutMe);
+  if (match != null) {
+    return match[1];
+  }
+
+  // Check for pronouns (see above for the list) joined by a forward slash, e.g.
+  // she/her
+  // (he/him/his)
+  // they / them
+  match = pronounListRegex.exec(aboutMe);
+  if (match != null) {
+    return match[1];
+  }
+
+  // No pronouns found
   return "";
 }
 
