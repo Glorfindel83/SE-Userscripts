@@ -7,7 +7,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     1.1
+// @version     1.1.1
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -102,7 +102,7 @@ waitForKeyElements("a.signature", function(jNode) {
     users[userID] = [];
     users[userID].push(jNode);
     // Read chat profile
-    $.get("https://chat.stackexchange.com/users/thumbs/" + userID + "?showUsage=true", function(data) {
+    $.get(`https://${location.hostname}/users/thumbs/${userID}?showUsage=true`, function(data) {
       let pronouns = data.user_message == null ? "" : getPronouns(data.user_message);
       users[userID].forEach(function (element) {
         showPronouns(element, pronouns);
