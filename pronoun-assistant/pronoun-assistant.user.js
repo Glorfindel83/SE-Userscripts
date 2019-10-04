@@ -7,7 +7,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     1.1
+// @version     1.2
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -46,7 +46,7 @@ let allPronouns = [
 ].join("|");
 let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/[\w/]+/i;
-let explicitPronounsRegex = /pronouns:\s*([^.]*)\./i;
+let explicitPronounsRegex = /pronouns:\s*([^.\n]*)(\.|\n|$)/im;
 
 // Keys:   user IDs
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
@@ -77,7 +77,7 @@ function getPronouns(aboutMe) {
 
   // Explicit pronouns specification, e.g.
   // Pronouns: he/him.
-  // (the trailing dot is important)
+  // The end is indicated by a dot, a newline, or simply the end of the text.
   match = explicitPronounsRegex.exec(aboutMe);
   if (match != null) {
     return match[1];
@@ -102,7 +102,7 @@ waitForKeyElements("a.signature", function(jNode) {
     users[userID] = [];
     users[userID].push(jNode);
     // Read chat profile
-    $.get("https://chat.stackexchange.com/users/thumbs/" + userID + "?showUsage=true", function(data) {
+    $.get("https://" + location.host + "/users/thumbs/" + userID + "?showUsage=true", function(data) {
       let pronouns = data.user_message == null ? "" : getPronouns(data.user_message);
       users[userID].forEach(function (element) {
         showPronouns(element, pronouns);
