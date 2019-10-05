@@ -4,15 +4,18 @@
 // @description Displays users' pronouns (mentioned in their profiles) in chat
 // @author      Glorfindel
 // @contributor ArtOfCode
+// @contributor wizzwizz4
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     1.3
+// @version     1.4
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
 // @grant       GM_addStyle
+// @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
+// @require     https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js
 // ==/UserScript==
 
 /* global $, waitForKeyElements */
