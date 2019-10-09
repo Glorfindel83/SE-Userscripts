@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.0
+// @version     1.1
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -243,7 +243,7 @@ function main(question) {
       });
     }
 
-    if (shouldFlag) {
+    if (shouldFlag || shouldVoteToClose) {
       // Flag/vote to close (which one doesn't matter for the API call)
       $.post({
         url: "https://" + document.location.host + "/flags/questions/" + postID + "/close/add",
@@ -258,7 +258,9 @@ function main(question) {
           console.log("Error: " + textStatus + " " + errorThrown);
         }
       });
-    } else if (shouldVoteToDelete) {
+    }
+    
+    if (shouldVoteToDelete) {
       // Delete vote
       // NICETOHAVE: maybe also if myReputation >= 10000 and question age >= 48 hours
       $.post({
