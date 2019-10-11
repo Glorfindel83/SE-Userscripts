@@ -49,7 +49,7 @@ let allPronouns = [
   "xey", "xem", "xyr"
 ].join("|");
 let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
-let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/[\w/]+/i;
+let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
 let explicitPronounsRegex = /pronouns:\s*([^.\n]*)(\.|\n|$)/im;
 
 // Keys:   user IDs
@@ -76,7 +76,7 @@ function getPronouns(aboutMe) {
   // http://my.pronoun.is/she
   var match = myPronounIsRegex.exec(aboutMe);
   if (match != null) {
-    return match[0];
+    return match[3];
   }
 
   // Explicit pronouns specification, e.g.
