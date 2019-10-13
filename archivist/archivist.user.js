@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
-// @version     0.2
+// @version     0.3
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -29,7 +29,7 @@
 (function () {
   "use strict";
   
-  $("a.short-link").each(function() {
+  $("a.js-share-link").each(function() {
     let shareButton = $(this);
 
     // Find links & images
@@ -115,14 +115,63 @@
         // Call Wayback Machine
         let archiveLink = "https://web.archive.org/save/" + link;
         GM.xmlHttpRequest({
-          method: 'GET',
+          method: 'POST',
           url: archiveLink,
-          onload: function (response) {
-            console.log("Saved: " + link);
-            next(true);
+          data: $.param({
+            "url": link,
+            "capture_all": "on"
+          }),
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          onload: function(response) {
+            let match = /var JOB_ID = "([0-9a-f-]{36})";/g.exec(response.response);
+            if (match == null) {
+              console.log("Could not determine job ID for " + archiveLink);
+              next(false);
+              return;
+            }
+            // Start monitoring archiving job
+            setTimeout(function () {
+              monitorArchivingJob(match[1]);
+            }, 2500);
           },
           onerror: function(response) {
             console.log(["An error occurred while calling: " + archiveLink,
+                         response.status, response.statusText, response.readyState,
+                         response.responseHeaders, response.responseText, response.finalUrl].join("\n"));
+            next(false);
+          }
+        });
+      }
+      
+      function monitorArchivingJob(jobID) {
+        // Fetch job status
+        let url = "https://web.archive.org/save/status/" + jobID + "?_t=" + Math.floor(Date.now() / 1000);
+        console.log(url);
+        GM.xmlHttpRequest({
+          method: 'GET',
+          url: url,
+          onload: function(response) {
+            let data = JSON.parse(response.response);
+            
+            // Check status
+            if (data.status == "pending") {
+              setTimeout(function () {
+                monitorArchivingJob(jobID);
+              }, 2500);
+            } else if (data.status == "success") {
+              // Success!
+              let playbackURL = "https://web.archive.org/web/" + data.timestamp + "/" + data.original_url;
+              console.log("Saved: " + playbackURL);
+              next(true);
+            } else {
+              console.log("Failed to archive: " + url);
+              next(false);
+            }
+          },
+          onerror: function(response) {
+            console.log(["An error occurred while calling: " + url,
                          response.status, response.statusText, response.readyState,
                          response.responseHeaders, response.responseText, response.finalUrl].join("\n"));
             next(false);
