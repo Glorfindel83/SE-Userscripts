@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.0
+// @version     2.1
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -120,6 +120,18 @@ function getPronouns(aboutMe) {
   return "";
 }
 
+// Converts the hostname (e.g. "meta.stackexchange.com") into the site parameter for the API ("meta")
+function getSite(hostname) {
+  if (hostname.contains(".stackexchange.com")) {
+    return hostname.split(".stackexchange.com")[0];
+  } else if (hostname.contains(".com")) {
+    return hostname.split(".com")[0];
+  } else {
+    // MathOverflow, MathOverflow Meta
+    return hostname;
+  }
+}
+
 // Chat signatures
 waitForKeyElements("a.signature", function(jNode) {
   let userID = jNode.attr("href").split("/users/")[1];
@@ -135,8 +147,10 @@ waitForKeyElements("a.signature", function(jNode) {
       users[userID] = pronouns;
     });
   } else if (typeof users[userID] == 'string') {
+    // We already have the pronouns, we can just use them.
     showPronounsForChat(jNode, users[userID]);
   } else {
+    // User appearing multiple times, their profile is already being fetched.
     users[userID].push(jNode);
   }
 });
@@ -157,6 +171,10 @@ waitForKeyElements("a.signature", function(jNode) {
   // Grab all the user IDs out of a page first. We'll go back over them later to add pronouns in.
   $userElements.each(function() {
     const link = $(this).attr("href");
+    if (!link.startsWith("/users/")) {
+      // not a user card, but a community wiki post
+      return;
+    }
     const userId = parseInt(link.split("/users/")[1]);
     if (userIds.indexOf(userId) === -1) {
       userIds.push(userId);
@@ -169,12 +187,14 @@ waitForKeyElements("a.signature", function(jNode) {
   while (userIds.length > 0) {
     const page = userIds.splice(0, 100);
     
-    // TODO: Glorfindel: You'll want to add an API key to this line before bumping version & pushing out the update
-    const resp = await fetch(`https://api.stackexchange.com/2.2/users/${page.join(';')}?site=${location.hostname}&filter=!23IboywNfWUzv_nydJbn*&pagesize=100`);
+    const resp = await fetch("https://api.stackexchange.com/2.2/users/" + page.join(';') + "?site=" + getSite(location.hostname)
+                             + "&key=L8n*CvRX3ZsedRQicxnjIA((&filter=!23IboywNfWUzv_nydJbn*&pagesize=100");
     const data = await resp.json();
-    data.items.forEach(i => {
-      profiles[i.user_id] = i.about_me;
-    });
+    if (typeof data.items != 'undefined') {
+      data.items.forEach(i => {
+        profiles[i.user_id] = i.about_me;
+      });
+    }
     
     if (data.backoff) {
       // Respect backoffs, not just pronouns.
