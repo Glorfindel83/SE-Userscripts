@@ -48,6 +48,7 @@ GM_addStyle(`
 
 .pronouns {
   color: #777;
+  padding-left: 5px;
 }
 `)
 
@@ -77,7 +78,7 @@ function showPronounsForChat(element, pronouns) {
   // the element might contain both a tiny and a full signature
   element.find("div.username").each(function (index, usernameElement) {
     usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
-      + '<span class="pronouns">' + pronouns + '</span>';
+      + '<span class="pronouns">' + pronouns.replace(/(<([^>]+)>)/ig, "") + '</span>';
   });
 }
 
@@ -86,7 +87,7 @@ function showPronouns(element, pronouns) {
   if (pronouns == "") {
     return;
   }
-  element.after($('<span class="pronouns" style="padding-left: 5px;">' + pronouns + '</span>'));
+  element.after($('<span class="pronouns">' + pronouns.replace(/(<([^>]+)>)/ig, "") + '</span>'));
 }
 
 // Check the user's 'about' in their chat profile for pronoun indicators
@@ -140,25 +141,58 @@ waitForKeyElements("a.signature", function(jNode) {
   }
 });
 
-// Q&A site signatures
-$("div.user-details > a, a.comment-user").each(function() {
-  let link = $(this).prop("href");
-  let userID = parseInt(link.split("/users/")[1]);
-  if (!users.hasOwnProperty(userID)) {    
-    users[userID] = [];
-    users[userID].push($(this));
-    // Read profile
-    $.get(link + "?tab=profile", function(data) {
-      console.log($(data).find("div.profile-user--bio")[0].innerText);
-      let pronouns = getPronouns($(data).find("div.profile-user--bio")[0].innerText);
-      users[userID].forEach(function (element) {
-        showPronouns(element, pronouns);
-      });
-      users[userID] = pronouns;
+// Q&A site user cards & comment usernames
+(async () => {
+  const sleep = async (ms) => {
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
     });
-  } else if (typeof users[userID] == 'string') {
-    showPronouns($(this), users[userID]);
-  } else {
-    users[userID].push($(this));
+  };
+  
+  const userIds = [];
+  const profiles = {};
+  
+  const $userElements = $("div.user-details > a, a.comment-user");
+  
+  // Grab all the user IDs out of a page first. We'll go back over them later to add pronouns in.
+  $userElements.each(function() {
+    const link = $(this).attr("href");
+    const userId = parseInt(link.split("/users/")[1]);
+    if (userIds.indexOf(userId) === -1) {
+      userIds.push(userId);
+    }
+  });
+  
+  // Split the list into 100-item pages and grab profiles for each page.
+  // This works because splice modifies the userIds array in-place, removing elements from the front and
+  // returning them into the `page` variable. When we've used them all, the array will be empty.
+  while (userIds.length > 0) {
+    const page = userIds.splice(0, 100);
+    
+    // TODO: Glorfindel: You'll want to add an API key to this line before bumping version & pushing out the update
+    const resp = await fetch(`https://api.stackexchange.com/2.2/users/${page.join(';')}?site=${location.hostname}&filter=!23IboywNfWUzv_nydJbn*&pagesize=100`);
+    const data = await resp.json();
+    data.items.forEach(i => {
+      profiles[i.user_id] = i.about_me;
+    });
+    
+    if (data.backoff) {
+      // Respect backoffs, not just pronouns.
+      await sleep(data.backoff * 1000);
+    }
   }
-});
+  
+  $userElements.each(function() {
+    const link = $(this).attr("href");
+    const userId = parseInt(link.split("/users/")[1]);
+    if (!users.hasOwnProperty(userId)) {
+      // No pronouns calculated yet, we need to calculate and store them.
+      users[userId] = getPronouns(profiles[userId]);
+      showPronouns($(this), users[userId]);
+    }
+    else {
+      // We already have the pronouns, we can just use them.
+      showPronouns($(this), users[userId]);
+    }
+  });
+})();
