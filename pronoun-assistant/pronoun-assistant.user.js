@@ -73,12 +73,14 @@ var users = {};
 if (location.hostname.indexOf("chat") === -1) {
   const localStorageData = localStorage.stackPronounAssistant_users;
   const cached = localStorageData ? JSON.parse(localStorage.stackPronounAssistant_users) : {};
-  const userData = Object.keys(cached).forEach(k => userData[parseInt(k, 10)] = cached[k]);
+  const userData = {};
+  Object.keys(cached).forEach(k => {userData[parseInt(k, 10)] = cached[k]});
   users = new Proxy(userData, {
-    get: (obj, prop) => userData,
+    get: (obj, prop) => obj[prop],
     set: (obj, prop, value) => {
       obj[prop] = value;
       localStorage.stackPronounAssistant_users = JSON.stringify(userData);
+    }
   });
 }
 
@@ -134,7 +136,7 @@ function getPronouns(aboutMe) {
 // Chat signatures
 waitForKeyElements("a.signature", function(jNode) {
   let userID = jNode.attr("href").split("/users/")[1];
-  if (!users.hasOwnProperty(userID)) {
+  if (!users[userID]) {
     users[userID] = [];
     users[userID].push(jNode);
     // Read chat profile
@@ -161,12 +163,12 @@ waitForKeyElements("a.signature", function(jNode) {
       setTimeout(resolve, ms);
     });
   };
-  
+
   const userIds = [];
   const profiles = {};
-  
+
   const $userElements = $("div.user-details > a, a.comment-user");
-  
+
   // Grab all the user IDs out of a page first. We'll go back over them later to add pronouns in.
   $userElements.each(function() {
     const link = $(this).attr("href");
@@ -179,13 +181,13 @@ waitForKeyElements("a.signature", function(jNode) {
       userIds.push(userId);
     }
   });
-  
+
   // Split the list into 100-item pages and grab profiles for each page.
   // This works because splice modifies the userIds array in-place, removing elements from the front and
   // returning them into the `page` variable. When we've used them all, the array will be empty.
   while (userIds.length > 0) {
     const page = userIds.splice(0, 100);
-    
+
     const resp = await fetch("https://api.stackexchange.com/2.2/users/" + page.join(';') + "?site=" + location.hostname
                              + "&key=L8n*CvRX3ZsedRQicxnjIA((&filter=!23IboywNfWUzv_nydJbn*&pagesize=100");
     const data = await resp.json();
@@ -194,17 +196,17 @@ waitForKeyElements("a.signature", function(jNode) {
         profiles[i.user_id] = i.about_me;
       });
     }
-    
+
     if (data.backoff) {
       // Respect backoffs, not just pronouns.
       await sleep(data.backoff * 1000);
     }
   }
-  
+
   $userElements.each(function() {
     const link = $(this).attr("href");
     const userId = parseInt(link.split("/users/")[1]);
-    if (!users.hasOwnProperty(userId)) {
+    if (!users[userId]) {
       // No pronouns calculated yet, we need to calculate and store them.
       users[userId] = getPronouns(profiles[userId]);
       showPronouns($(this), users[userId]);
