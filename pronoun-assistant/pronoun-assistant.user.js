@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name        Stack Exchange Pronoun Assistant
 // @namespace   https://github.com/Glorfindel83/
-// @description Displays users' pronouns (mentioned in their profiles) in chat
+// @description Displays users' pronouns (mentioned in their profiles)
 // @author      Glorfindel
-// @contributor ArtOfCode
+// @author      ArtOfCode
 // @contributor wizzwizz4
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.1
+// @version     2.2
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -41,11 +41,9 @@ GM_addStyle(`
   align-items: center;
   width: 100%;
 }
-
 .username {
   height: unset !important;
 }
-
 .pronouns {
   color: #777;
   padding-left: 5px;
@@ -99,6 +97,10 @@ function showPronounsForChat(element, pronouns) {
 function showPronouns(element, pronouns) {
   if (pronouns == "") {
     return;
+  }
+  // Make sure the pronouns don't end up between the username and the diamond
+  if (element.next("span.mod-flair").length != 0) {
+    element = element.next("span.mod-flair");
   }
   element.after($('<span class="pronouns">' + pronouns.replace(/(<([^>]+)>)/ig, "") + '</span>'));
 }
