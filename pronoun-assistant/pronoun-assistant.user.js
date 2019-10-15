@@ -68,7 +68,19 @@ let explicitPronounsRegex = /pronouns:\s*([^.\n)]*)(\.|\n|\)|$)/im;
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
 //         or a string with pronouns.
 var users = {};
-// TODO: cache in local storage
+
+// If we're on a Q&A site, also cache all changes to the `users` object to save on API calls
+if (location.hostname.indexOf("chat") === -1) {
+  const localStorageData = localStorage.stackPronounAssistant_users;
+  const cached = localStorageData ? JSON.parse(localStorage.stackPronounAssistant_users) : {};
+  const userData = Object.keys(cached).forEach(k => userData[parseInt(k, 10)] = cached[k]);
+  users = new Proxy(userData, {
+    get: (obj, prop) => userData,
+    set: (obj, prop, value) => {
+      obj[prop] = value;
+      localStorage.stackPronounAssistant_users = JSON.stringify(userData);
+  });
+}
 
 // Adds pronoun information to a user's 'signature' in chat.
 function showPronounsForChat(element, pronouns) {
@@ -82,7 +94,6 @@ function showPronounsForChat(element, pronouns) {
   });
 }
 
-//
 function showPronouns(element, pronouns) {
   if (pronouns == "") {
     return;
@@ -118,18 +129,6 @@ function getPronouns(aboutMe) {
 
   // No pronouns found
   return "";
-}
-
-// Converts the hostname (e.g. "meta.stackexchange.com") into the site parameter for the API ("meta")
-function getSite(hostname) {
-  if (hostname.contains(".stackexchange.com")) {
-    return hostname.split(".stackexchange.com")[0];
-  } else if (hostname.contains(".com")) {
-    return hostname.split(".com")[0];
-  } else {
-    // MathOverflow, MathOverflow Meta
-    return hostname;
-  }
 }
 
 // Chat signatures
@@ -187,10 +186,10 @@ waitForKeyElements("a.signature", function(jNode) {
   while (userIds.length > 0) {
     const page = userIds.splice(0, 100);
     
-    const resp = await fetch("https://api.stackexchange.com/2.2/users/" + page.join(';') + "?site=" + getSite(location.hostname)
+    const resp = await fetch("https://api.stackexchange.com/2.2/users/" + page.join(';') + "?site=" + location.hostname
                              + "&key=L8n*CvRX3ZsedRQicxnjIA((&filter=!23IboywNfWUzv_nydJbn*&pagesize=100");
     const data = await resp.json();
-    if (typeof data.items != 'undefined') {
+    if (typeof data.items !== 'undefined') {
       data.items.forEach(i => {
         profiles[i.user_id] = i.about_me;
       });
