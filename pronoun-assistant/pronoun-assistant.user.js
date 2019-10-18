@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.2
+// @version     2.3
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -44,9 +44,14 @@ GM_addStyle(`
 .username {
   height: unset !important;
 }
-.pronouns {
+.pronouns, .pronouns a {
   color: #777;
+}
+.pronouns {
   padding-left: 5px;
+}
+.pronouns a:hover {
+  text-decoration: underline;
 }
 `)
 
@@ -59,13 +64,16 @@ let allPronouns = [
   "xey", "xem", "xyr"
 ].join("|");
 let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
-let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/[\w/]+/i;
+let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
 let explicitPronounsRegex = /pronouns:\s*([^.\n)]*)(\.|\n|\)|$)/im;
 
 // Keys:   user IDs
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
 //         or a string with pronouns.
 var users = {};
+// Keys:   user IDs (Q&A only)
+// Values: the users' 'about me' values.
+var profiles = {};
 
 // If we're on a Q&A site, also cache all changes to the `users` object to save on API calls
 if (location.hostname.indexOf("chat") === -1) {
@@ -83,35 +91,67 @@ if (location.hostname.indexOf("chat") === -1) {
 }
 
 // Adds pronoun information to a user's 'signature' in chat.
-function showPronounsForChat(element, pronouns) {
+function showPronounsForChat($element, pronouns) {
   if (pronouns == "") {
     return;
   }
-  // the element might contain both a tiny and a full signature
-  element.find("div.username").each(function (index, usernameElement) {
+  
+  addPronounsToChatSignatures($element, pronouns);
+
+  // After clicking the signature (to show the chat profile popup), *sometimes*
+  // (the exact conditions are unclear - it happens in The Bridge but not in the Teachers' Lounge)
+  // the signature gets rerendered. In that case, we need to readd the pronouns.
+  $element.on("DOMSubtreeModified", function() {
+    if ($(this).find(".pronouns").length == 0) {
+      $(this).off("DOMSubtreeModified");
+      addPronounsToChatSignatures($(this), pronouns);
+    }
+  });
+}
+
+function addPronounsToChatSignatures($element, pronouns) {
+  // The element might contain both a tiny and a full signature
+  $element.find("div.username").each(function (index, usernameElement) {
     usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
       + '<span class="pronouns">' + pronouns.replace(/(<([^>]+)>)/ig, "") + '</span>';
   });
 }
 
-function showPronouns(element, pronouns) {
-  if (pronouns == "") {
+// Determines pronoun information and adds it to a user card (under a post) or author information (after a comment)
+function decorate($element) {
+  const link = $element.attr("href");
+  const userId = parseInt(link.split("/users/")[1]);
+  if (!users[userId]) {
+    // No pronouns calculated yet, we need to calculate and store them.
+    users[userId] = getPronouns(profiles[userId], true);
+    showPronouns($element, users[userId]);
+  } else {
+    // We already have the pronouns, we can just use them.
+    showPronouns($element, users[userId]);
+  }
+};
+
+// Adds pronoun information to a user card or author information
+function showPronouns($element, pronouns) {
+  if (pronouns == "" || $element.siblings(".pronouns").length != 0) {
     return;
   }
+  
   // Make sure the pronouns don't end up between the username and the diamond
-  if (element.next("span.mod-flair").length != 0) {
-    element = element.next("span.mod-flair");
+  if ($element.next("span.mod-flair").length != 0) {
+    $element = $element.next("span.mod-flair");
   }
-  element.after($('<span class="pronouns">' + pronouns.replace(/(<([^>]+)>)/ig, "") + '</span>'));
+  $element.after($('<span class="pronouns">' + pronouns + '</span>'));
 }
 
-// Check the user's 'about' in their chat profile for pronoun indicators
-function getPronouns(aboutMe) {
+// Check text (obtained from the user's 'about me' in their chat profile or Q&A profile) for pronoun indicators
+function getPronouns(aboutMe, allowPronounIslandLinks) {
   // Link to Pronoun Island, e.g.
   // http://my.pronoun.is/she
   var match = myPronounIsRegex.exec(aboutMe);
   if (match != null) {
-    return match[0];
+    return allowPronounIslandLinks ? '<a href=\"' + match[0] + '\" target="_blank">' + match[0] + '</a>'
+      : match[3];
   }
 
   // Explicit pronouns specification, e.g.
@@ -143,7 +183,7 @@ waitForKeyElements("a.signature", function(jNode) {
     users[userID].push(jNode);
     // Read chat profile
     $.get("https://" + location.host + "/users/thumbs/" + userID + "?showUsage=true", function(data) {
-      let pronouns = data.user_message == null ? "" : getPronouns(data.user_message);
+      let pronouns = data.user_message == null ? "" : getPronouns(data.user_message, false);
       users[userID].forEach(function (element) {
         showPronounsForChat(element, pronouns);
       });
@@ -158,6 +198,9 @@ waitForKeyElements("a.signature", function(jNode) {
   }
 });
 
+// Selector for Q&A sites
+const selector = "div.user-details > a, a.comment-user";
+
 // Q&A site user cards & comment usernames
 (async () => {
   const sleep = async (ms) => {
@@ -167,9 +210,7 @@ waitForKeyElements("a.signature", function(jNode) {
   };
 
   const userIds = [];
-  const profiles = {};
-
-  const $userElements = $("div.user-details > a, a.comment-user");
+  const $userElements = $(selector);
 
   // Grab all the user IDs out of a page first. We'll go back over them later to add pronouns in.
   $userElements.each(function() {
@@ -205,17 +246,10 @@ waitForKeyElements("a.signature", function(jNode) {
     }
   }
 
-  $userElements.each(function() {
-    const link = $(this).attr("href");
-    const userId = parseInt(link.split("/users/")[1]);
-    if (!users[userId]) {
-      // No pronouns calculated yet, we need to calculate and store them.
-      users[userId] = getPronouns(profiles[userId]);
-      showPronouns($(this), users[userId]);
-    }
-    else {
-      // We already have the pronouns, we can just use them.
-      showPronouns($(this), users[userId]);
-    }
+  $userElements.each(function() { decorate($(this)); });
+  
+  // Make sure new answers / comments receive the same treatment
+  waitForKeyElements(selector, function(jNode) {
+    decorate($(jNode));
   });
 })();
