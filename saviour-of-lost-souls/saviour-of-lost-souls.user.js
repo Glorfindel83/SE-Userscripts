@@ -21,6 +21,9 @@
 // ==/UserScript==
 /* global $, waitForKeyElements */
 
+// These objects hold information about whether the user *can* and *should* perform certain actions.
+const can = {}, should = {};
+
 (function ($) {
   "use strict";
   
@@ -58,9 +61,10 @@ function main(question) {
   
   // Which site?
   let isMetaSE = location.host == 'meta.stackexchange.com';
+  let isMeta = location.host.startsWith('meta');
   let isBeta = location.host == 'hardwarerecs.stackexchange.com';
 
-  // My reputation
+  // My reputation / privileges
   let myReputation = parseInt($('a.my-profile div.-rep')[0].innerText.replace(/,/g, ''));
   let hasCommentPrivilege = myReputation >= (isMetaSE ? 5 : 50);
   let hasFlagPrivilege = myReputation >= 15;
@@ -73,95 +77,66 @@ function main(question) {
   if (!hasCommentPrivilege && !hasFlagPrivilege)
     return;
   
-  // Score; downvoted or not?
-  let downvoted = question.find('a.vote-down-on').length > 0;
-  let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
-
-  // Closed?
-  let status = $('div.question-status h2 b');
-  let statusText = status.length > 0 ? status[0].innerText : '';
-  let closed = statusText == 'marked' || statusText == 'put on hold' || statusText == 'closed';
-
-  // Is there any comment not by the author?
   let comments = question.find('ul.comments-list');
-  var hasNonOwnerComment = false;
-  comments.find('a.comment-user').each(function() {
-    if (!$(this).hasClass('owner')) {
-      hasNonOwnerComment = true;
-    }
-  });
   
-  // Determine which actions to take
-  // Comment
-  let shouldComment = hasCommentPrivilege && !hasNonOwnerComment;
-  // Downvote (not when the post is already on -3 or lower, to be slightly more welcoming)
-  let shouldDownvote = hasDownvotePrivilege && !downvoted && score > -3;
-  // Flag/vote to close
-  let shouldFlag = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
-  let shouldVoteToClose = hasCloseVotePrivilege && !closed;
-  // Vote to delete
-  let shouldVoteToDelete = (hasDeleteVotePrivilege && closed && score <= -3) || isModerator;
-
   // Add post menu button
   let menu = question.find('div.post-menu');
   menu.append($('<span class="lsep">|</span>'));
   let button = $('<a href="#" title="down-/close-/delete vote and post a welcoming comment">lost soul</a>');
   menu.append(button);
   button.click(function() {
+    // Score; downvoted or not?
+    let downvoted = question.find('.js-vote-down-btn.fc-theme-primary').length > 0;
+    let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
+
+    // Closed?
+    let status = $('div.question-status h2 b');
+    let statusText = status.length > 0 ? status[0].innerText : '';
+    let closed = statusText == 'marked' || statusText == 'put on hold' || statusText == 'closed';
+
+    // Is there any comment not by the author?
+    var hasNonOwnerComment = false;
+    comments.find('a.comment-user').each(function() {
+      if (!$(this).hasClass('owner')) {
+        hasNonOwnerComment = true;
+      }
+    });
+
+    // Determine which actions can be taken
+    can['comment'] = hasCommentPrivilege;
+    can['downvote'] = hasDownvotePrivilege && !downvoted;
+    can['flag'] = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
+    can['close'] = hasCloseVotePrivilege && !closed;
+    can['delete'] = (hasDeleteVotePrivilege && closed && score <= -3) || isModerator;
+    // TODO: also when downvote and/or close vote bring the question into deletion territory
+
+    // Determine which actions to take
+    Object.assign(should, can);
+    // Comment
+    should['comment'] &= !hasNonOwnerComment;
+    // Downvote (not when the post is already on -3 or lower, to be slightly more welcoming)
+    should['downvote'] &= score > -3;
+    // Delete; only on Meta after request: https://github.com/Glorfindel83/SE-Userscripts/issues/20
+    should['delete'] &= isMeta;
+    
     // Generate HTML for dialog
     var html = `
   <aside class="s-modal bg-transparent pe-none js-stacks-managed-popup js-fades-with-aria-hidden" id="modal-base" tabindex="-1" role="dialog" aria-labelledby="mod-modal-title" aria-describedby="mod-modal-description" aria-hidden="false">    
       <form class="s-modal--dialog js-modal-dialog js-keyboard-navigable-modal pe-auto" role="document" data-controller="se-draggable se-mod-menu" data-se-mod-menu-model-type="post" data-se-mod-menu-model-id="371841" method="get" action="#" data-action="se-mod-menu#submit" data-keyboard-actions="#mod-screen-select-menu, input[name=action], .js-info-link">
           <h1 class="s-modal--header fs-headline1 fw-bold mr48 c-move js-first-tabbable" id="modal-title" tabindex="0" data-target="se-draggable.handle">
               'Saviour' of Lost Souls
-          </h1>`;
-    html += `
+          </h1>
           <div class="grid--cell">
-              <span class="js-short-label">Please confirm you want to</span>
-              <ul>`;
-    // List actions that will be taken
-    if (shouldComment) {
-      html += `
-                  <li>leave a welcoming comment</li>`;
-    }
-    if (shouldDownvote) {
-      html += `
-                  <li>downvote the question</li>`;
-    }
-    if (shouldFlag) {
-      html += `
-                  <li>flag the question as off-topic</li>`;
-    }
-    if (shouldVoteToClose) {
-      html += `
-                  <li>vote to close the question as off-topic</li>`;
-    }
-    if (shouldVoteToDelete) {
-      html += `
-                  <li>vote to delete the question</li>`;
-    }
+              <span class="js-short-label">Please confirm you want to</span>`;
+    // NICETOHAVE: hover (title) showing *why* you can't perform a certain action
+    html += getHTMLForOption('comment', 'Leave a welcoming comment' + (can['comment'] && hasNonOwnerComment ? ' (note: another user already posted a comment)' : ''));
+    html += getHTMLForOption('downvote', 'Downvote the question');
+    html += getHTMLForOption('flag', 'Flag the question as off-topic');
+    html += getHTMLForOption('close', 'Vote to close the question as off-topic');
+    html += getHTMLForOption('delete', 'Vote to delete the question');
     html += `
-              </ul>
           </div>
-          <br/>`;
-    if (hasCommentPrivilege && hasNonOwnerComment) {
-      // Add option to post a comment anyway
-      html += `
-          <div class="grid--cell">
-              <span>Another user already posted a comment.</span>
-              <fieldset class="mt4 ml4 mb16">
-                  <div class="grid gs8 gsx ff-row-nowrap">
-                      <div class="grid--cell">
-                          <input class="s-checkbox" type="checkbox" name="postCommentAnyway" id="sols-postCommentAnyway">
-                      </div>
-                      <label class="grid--cell s-label fw-normal" for="sols-postCommentAnyway">
-                          Post a welcoming comment anyway
-                      </label>
-                  </div>
-              </fieldset>
-          </div>`;
-    }
-    html += `
+          <br/>
           <div class="grid gs8 gsx s-modal--footer">
               <button class="grid--cell s-btn s-btn__primary" type="submit" onclick="saviourOfLostSouls.submitDialog();">Confirm</button>
               <button class="grid--cell s-btn js-modal-close" type="button" onclick="saviourOfLostSouls.closeDialog();">Cancel</button>
@@ -184,7 +159,7 @@ function main(question) {
     let postID = parseInt(question.attr('data-questionid'));
     let fkey = window.localStorage["se:fkey"].split(",")[0];
 
-    if (shouldComment || $("#sols-postCommentAnyway").prop("checked")) {
+    if (selected("comment")) {
       // Post comment
       let author = owner.find('div.user-details a')[0].innerText;
 
@@ -194,7 +169,7 @@ function main(question) {
           "If you think you can [edit] it to become on-topic, please have a look at the [question quality guidelines](https://softwarerecs.meta.stackexchange.com/q/336/23377).")
        : window.location.host === "hardwarerecs.stackexchange.com"
        ? ("Hi " + author + ", welcome to [hardwarerecs.se]! " +
-          "This question does not appear to be about hardware recommendations, within [the scope defined on meta](https://hardwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic)." +
+          "This question does not appear to be about hardware recommendations, within [the scope defined on meta](https://hardwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic). " +
           "If you think you can [edit] it to become on-topic, please have a look at the [question quality guidelines](https://hardwarerecs.meta.stackexchange.com/q/205/4495).")
        : ("Hi " + author + ", welcome to Meta! " +
           "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
@@ -227,7 +202,7 @@ function main(question) {
       });
     }
 
-    if (shouldDownvote) {
+    if (selected("downvote")) {
       // Downvote (not when the post is already on -3 or lower, to be slightly more welcoming)
       $.post({
         url: "https://" + document.location.host + "/posts/" + postID + "/vote/3", // 3 = downvote
@@ -243,7 +218,7 @@ function main(question) {
       });
     }
 
-    if (shouldFlag || shouldVoteToClose) {
+    if (selected("flag") || selected("close")) {
       // Flag/vote to close (which one doesn't matter for the API call)
       $.post({
         url: "https://" + document.location.host + "/flags/questions/" + postID + "/close/add",
@@ -260,7 +235,7 @@ function main(question) {
       });
     }
     
-    if (shouldVoteToDelete) {
+    if (selected("delete")) {
       // Delete vote
       // NICETOHAVE: maybe also if myReputation >= 10000 and question age >= 48 hours
       $.post({
@@ -277,7 +252,25 @@ function main(question) {
       });
     }
 
+    // Dismiss dialog
+    $("#modal-base").remove();
     // Reload page; this is less elegant than waiting for all POST calls, but it works.
-    window.setTimeout(() => window.location.reload(false), 1000);    
+    // TODO: window.setTimeout(() => window.location.reload(false), 1000);
   };
+}
+
+function getHTMLForOption(name, description) {
+  return `
+              <fieldset class="mt4 ml4 mb16">
+                  <div class="grid gs8 gsx ff-row-nowrap ${ can[name] ? '' : 'is-disabled' }">
+                      <div class="grid--cell">
+                          <input class="s-checkbox" type="checkbox" name="${ name }" id="sols-${ name }" ${ can[name] ? '' : 'disabled' } ${ should[name] ? 'checked' : '' }>
+                      </div>
+                      <label class="grid--cell s-label fw-normal" for="sols-${ name }">${ description }</label>
+                  </div>
+              </fieldset>`;
+}
+
+function selected(name) {
+  return $("#sols-" + name).prop("checked");
 }
