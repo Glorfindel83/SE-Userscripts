@@ -255,7 +255,7 @@ function main(question) {
     // Dismiss dialog
     $("#modal-base").remove();
     // Reload page; this is less elegant than waiting for all POST calls, but it works.
-    // TODO: window.setTimeout(() => window.location.reload(false), 1000);
+    window.setTimeout(() => window.location.reload(false), 1000);
   };
 }
 
