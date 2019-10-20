@@ -141,7 +141,7 @@ function showPronouns($element, pronouns) {
   if ($element.next("span.mod-flair").length != 0) {
     $element = $element.next("span.mod-flair");
   }
-  $element.after($('<span class="pronouns">' + pronouns + '</span>'));
+  $element.after($('<span class="pronouns"></span>').text(pronouns.replace(/<[^>]+>/g, '')));
 }
 
 // Check text (obtained from the user's 'about me' in their chat profile or Q&A profile) for pronoun indicators
