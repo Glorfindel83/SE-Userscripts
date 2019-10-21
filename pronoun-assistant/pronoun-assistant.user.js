@@ -78,13 +78,36 @@ var profiles = {};
 // If we're on a Q&A site, also cache all changes to the `users` object to save on API calls
 if (location.hostname.indexOf("chat") === -1) {
   const localStorageData = localStorage.stackPronounAssistant_users;
-  const cached = localStorageData ? JSON.parse(localStorage.stackPronounAssistant_users) : {};
+  let cached = localStorageData ? JSON.parse(localStorage.stackPronounAssistant_users) : {};
+
+  if (Object.keys(cached).length > 0 && typeof cached[Object.keys(cached)[0]] === "string") {
+    // v2.4 and before had no cache expiry, users[userId] was a string.
+    // Currently, users[userId] is an array containing a string and an expiry.
+    // If we have cached data but it's in <= 2.4 format, delete it - we'll regenerate it instead.
+    delete localStorage.stackPronounAssistant_users;
+    cached = {};
+  }
+
   const userData = {};
   Object.keys(cached).forEach(k => {userData[parseInt(k, 10)] = cached[k]});
   users = new Proxy(userData, {
-    get: (obj, prop) => obj[prop],
+    get: (obj, prop) => {
+      const data = obj[prop];
+      if (!data) {
+        return null;
+      }
+      else {
+        const [pronouns, expiry] = data;
+        if (expiry < Date.now()) {
+          return null;
+        }
+        else {
+          return pronouns;
+        }
+      }
+    },
     set: (obj, prop, value) => {
-      obj[prop] = value;
+      obj[prop] = [value, Date.now() + 86400 * 1000]; // 24h expiry
       localStorage.stackPronounAssistant_users = JSON.stringify(userData);
     }
   });
