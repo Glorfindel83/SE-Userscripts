@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.4
+// @version     2.5
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -65,7 +65,7 @@ let allPronouns = [
 ].join("|");
 let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
-let explicitPronounsRegex = /pronouns:\s*([^.\n)<]*)(\.|\n|\)|<|$)/im;
+let explicitPronounsRegex = /pronouns:\s*([^.\n)\]}<]*)(\.|\n|\)|]|}<|$)/im;
 
 // Keys:   user IDs
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
