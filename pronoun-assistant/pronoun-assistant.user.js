@@ -48,7 +48,7 @@ GM_addStyle(`
   color: #777;
 }
 .pronouns {
-  padding-left: 5px;
+  word-break: keep-all;
 }
 .pronouns a:hover {
   text-decoration: underline;
@@ -136,7 +136,7 @@ function addPronounsToChatSignatures($element, pronouns) {
   // The element might contain both a tiny and a full signature
   $element.find("div.username").each(function (index, usernameElement) {
     usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
-      + '<span class="pronouns">' + pronouns + '</span>';
+      + '<span class="pronouns"> ' + pronouns + '</span>';
   });
 }
 
