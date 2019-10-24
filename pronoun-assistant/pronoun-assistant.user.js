@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.6
+// @version     2.7
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -164,7 +164,7 @@ function showPronouns($element, pronouns) {
   if ($element.next("span.mod-flair").length != 0) {
     $element = $element.next("span.mod-flair");
   }
-  $element.after($('<span class="pronouns">' + pronouns + '</span>'));
+  $element.after($('<span class="pronouns"> ' + pronouns + '</span>'));
 }
 
 // Check text (obtained from the user's 'about me' in their chat profile or Q&A profile) for pronoun indicators
