@@ -33,6 +33,8 @@
       target = $(this).parent().parent().siblings("div.js-post-notices");
     }
     $(this).remove();
+	  $(this).removeClass("mb16");
+	  $(this).addClass("my8");
     target.append($(this));
   });
 })();
