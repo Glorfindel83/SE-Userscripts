@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/post-notice-repositioner/post-notice-repositioner.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/post-notice-repositioner/post-notice-repositioner.user.js
-// @version     0.1
+// @version     0.2
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -33,8 +33,8 @@
       target = $(this).parent().parent().siblings("div.js-post-notices");
     }
     $(this).remove();
-	  $(this).removeClass("mb16");
-	  $(this).addClass("my8");
+    $(this).removeClass("mb16");
+    $(this).addClass("my8");
     target.append($(this));
   });
 })();
