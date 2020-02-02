@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.2
+// @version     1.3
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -90,9 +90,9 @@ function main(question) {
     let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
 
     // Closed?
-    let status = $('div.question-status h2 b');
+    let status = $('#question aside.s-notice div:first-child b');
     let statusText = status.length > 0 ? status[0].innerText : '';
-    let closed = statusText == 'marked' || statusText == 'put on hold' || statusText == 'closed';
+    let closed = statusText == 'Closed.';
 
     // Is there any comment not by the author?
     var hasNonOwnerComment = false;
@@ -236,20 +236,22 @@ function main(question) {
     }
     
     if (selected("delete")) {
-      // Delete vote
-      // NICETOHAVE: maybe also if myReputation >= 10000 and question age >= 48 hours
-      $.post({
-        url: "https://" + document.location.host + "/posts/" + postID + "/vote/10", // 10 = delete
-        data: "fkey=" + fkey,
-        success: function () {
-          // NICETOHAVE: update delete vote count
-          console.log("Delete vote cast.");
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          window.alert("An error occurred, please try again later.");
-          console.log("Error: " + textStatus + " " + errorThrown);
-        }
-      });
+      window.setTimeout(function() {
+        // Delete vote
+        // NICETOHAVE: maybe also if myReputation >= 10000 and question age >= 48 hours
+        $.post({
+          url: "https://" + document.location.host + "/posts/" + postID + "/vote/10", // 10 = delete
+          data: "fkey=" + fkey,
+          success: function () {
+            // NICETOHAVE: update delete vote count
+            console.log("Delete vote cast.");
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            window.alert("An error occurred, please try again later.");
+            console.log("Error: " + textStatus + " " + errorThrown);
+          }
+        });
+      }, 500); // small delay to make sure the close vote is registered
     }
 
     // Dismiss dialog
