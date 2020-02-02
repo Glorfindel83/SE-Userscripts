@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name        Stack Exchange Wilson Confidence Rating Calculator
 // @namespace   https://github.com/Glorfindel83/
-// @description Calculates Wilson confidence ratings for Stack Exchange post
+// @description Calculates Wilson confidence ratings for Stack Exchange posts
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/wilson-calculator/wilson-calculator.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/wilson-calculator/wilson-calculator.user.js
-// @supportURL  https://stackapps.com/
-// @version     0.1
+// @supportURL  https://stackapps.com/q/8561/34061
+// @version     1.0
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -21,19 +21,18 @@
 // @exclude     *://*.askubuntu.com/questions/ask
 // @exclude     *://*.stackapps.com/questions/ask
 // @exclude     *://*.mathoverflow.net/questions/ask
+// @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
 
-/* global $ */
+/* global $, waitForKeyElements */
 
-function calculate(event) {
-  event.preventDefault();
-  
+function calculate($scrollTo) {
   // Hide buttons
   $("a.wilson").hide();
   
   // Call API
   let questionID = document.getElementById("question").getAttribute("data-questionid");
-  $.get("https://api.stackexchange.com/2.2/questions/" + questionID + "?pagesize=100&site=" + location.host + "&filter=!YOLgOM1QPXB5wQPT*PjSezffJ9", function(data) {
+  $.get("https://api.stackexchange.com/2.2/questions/" + questionID + "?pagesize=100&site=" + location.host + "&filter=!YOLgOM1QPXB5wQPT*PjSezffJ9&key=s1IeZpEeBaEZM9scI25Lsg((", function(data) {
     let question = data.items[0];
     showRating(questionID, question);
     var answerRatings = {};
@@ -78,24 +77,43 @@ function calculate(event) {
         $lastHeaderElement.after(elements[answerID]);
         $lastHeaderElement = elements[answerID];
       });
+      $scrollTo.scrollIntoView({ behavior: 'smooth' });
     }
   });
 }
 
 function showRating(postID, post) {
   let rating = calculateWilsonRating(post.up_vote_count, post.down_vote_count);
-  $("div.js-voting-container[data-post-id='" + postID + "'] > div.js-vote-count").after("<div class=\"fs-fine\">(" + (rating * 100).toFixed(1) + "%)</div>");
+  let $voteCount = $("div.js-voting-container[data-post-id='" + postID + "'] > div.js-vote-count");
+  $voteCount.next(".wilson-rating").remove();
+  $voteCount.after("<div class=\"fs-fine wilson-rating\" style=\"text-align: center\">(" + (rating * 100).toFixed(1) + "%)</div>");
   return rating;
 }
 
-// Add buttons
+const timelineButtonSelector = "a[data-shortcut='T']";
+
 (() => {
-  $("a[data-shortcut='T']").each(function () {
+  // Find timeline buttons and add Wilson buttons below them
+  $(timelineButtonSelector).each(function () {
+    if ($(this).parents(".answer").hasClass("deleted-answer"))
+      return;
     let button = $('<a class="wilson">Wilson</a>');
-    button.on('click', calculate);
+    button.on('click', function() {
+      event.preventDefault();
+      calculate(this.parentElement);
+    });
     $(this).after(button);
   });
 })();
+
+// Deleted posts aren't exposed via the API; they can only be calculated when the vote count is broken down
+waitForKeyElements("div.vote-count-separator", function(jNode) {
+  var post = {};
+  post.up_vote_count = parseInt($(jNode).prev().text());
+  post.down_vote_count = Math.abs(parseInt($(jNode).next().text()));
+  let postID = $(jNode).parent().parent().attr("data-post-id");
+  showRating(postID, post);
+});
 
 // cf. https://stackapps.com/q/8555/34061
 function calculateWilsonRating(upvotes, downvotes) {
