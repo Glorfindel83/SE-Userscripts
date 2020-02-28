@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.7
+// @version     2.8
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -66,6 +66,7 @@ let allPronouns = [
 let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
 let explicitPronounsRegex = /pronouns:\s*([^.\n)\]}<]*)(\.|\n|\)|]|}<|$)/im;
+let unlikelyCombinations = ["her/his", "her/him", "he/she"];
 
 // Keys:   user IDs
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
@@ -191,7 +192,12 @@ function getPronouns(aboutMe, allowPronounIslandLinks) {
   // they / them
   match = pronounListRegex.exec(aboutMe);
   if (match != null) {
-    return match[1];
+    // Check for unlikely combinations, cf. https://stackapps.com/a/8567/34061
+    let pronouns = match[1].split(/\s*\/\s*/);
+    pronouns.sort();
+    if (!unlikelyCombinations.includes(pronouns.join("/"))) {
+      return match[1];
+    }
   }
 
   // No pronouns found
