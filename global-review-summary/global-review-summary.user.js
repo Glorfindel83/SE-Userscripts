@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Stack Exchange Global Review Summary
-// @version       0.3
+// @version       0.4
 // @description   Stack Exchange network wide review summary available in your network profile
 // @author        Glorfindel
 // @attribution   Floern (https://github.com/Floern)
@@ -382,7 +382,7 @@ function parseSiteReviewSummary(siteName, siteReviewURL, html, index) {
     pageNode.innerHTML = html;
   
     // Determine # of reviews
-    let count = pageNode.querySelector("#badge-progress-count").innerText;
+    let count = pageNode.querySelector(".js-badge-progress-count").innerText;
     let reviews = parseInt(count.replace(",", ""), 10);
     if (reviews == 0) {
         // skip when no reviews
