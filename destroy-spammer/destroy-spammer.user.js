@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.6
+// @version     0.6.1
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://stackoverflow.com/users/*
@@ -18,8 +18,10 @@
   'use strict';
   
   // Determine user ID
-  var userIDRegex = /\/users\/(\d+)\//g;
-  var userID = userIDRegex.exec(document.location) [1];
+  var userIDRegex = /\/users\/(\d+)\//g.exec(document.location);
+  if (userIDRegex == null)
+    return; // e.g. flag summary page
+  var userID = userIDRegex[1];
   var userName = $(".name.mod-tabs").attr("title");
   var userNameIsSuspicious = typeof userName !== 'undefined' && userName.toLowerCase().contains("insur");
 

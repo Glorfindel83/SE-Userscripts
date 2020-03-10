@@ -5,17 +5,20 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.3
+// @version     1.4
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/review/first-posts*
 // @match       *://hardwarerecs.stackexchange.com/questions/*
 // @match       *://hardwarerecs.stackexchange.com/review/first-posts*
+// @match       *://stackapps.com/questions/*
+// @match       *://stackapps.com/review/first-posts*
 // @exclude     *://meta.stackexchange.com/questions/ask
 // @exclude     *://meta.stackoverflow.com/questions/ask
 // @exclude     *://softwarerecs.stackexchange.com/questions/ask
 // @exclude     *://hardwarerecs.stackexchange.com/questions/ask
+// @exclude     *://stackapps.com/questions/ask
 // @grant       none
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
@@ -171,6 +174,12 @@ function main(question) {
        ? ("Hi " + author + ", welcome to [hardwarerecs.se]! " +
           "This question does not appear to be about hardware recommendations, within [the scope defined on meta](https://hardwarerecs.meta.stackexchange.com/questions/tagged/scope) and in the [help center](/help/on-topic). " +
           "If you think you can [edit] it to become on-topic, please have a look at the [question quality guidelines](https://hardwarerecs.meta.stackexchange.com/q/205/4495).")
+       : window.location.host === "stackapps.com"
+       ? ("Hi " + author + ", welcome to Stack Apps! " +
+          "This question does not appear to be about the Stack Exchange API or a script or browser extension for Stack Exchange. " +
+          "To get an answer from users that have the expertise about the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
+          "Check [How do I ask a good question](/help/how-to-ask) and [What is on topic](/help/on-topic) on the *target* site to make sure your post is in good shape. " +
+          "Your question is definitely [off-topic](/help/on-topic) and better deleted here.")
        : ("Hi " + author + ", welcome to Meta! " +
           "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
           "To get an answer from users that have the expertise about the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
@@ -223,7 +232,8 @@ function main(question) {
       $.post({
         url: "https://" + document.location.host + "/flags/questions/" + postID + "/close/add",
         data: "fkey=" + fkey + "&closeReasonId=OffTopic&closeAsOffTopicReasonId=" + (window.location.host === "softwarerecs.stackexchange.com" ||
-                                                                                     window.location.host === "hardwarerecs.stackexchange.com" ? "1" : "8"),
+                                                                                     window.location.host === "hardwarerecs.stackexchange.com" ||
+                                                                                     window.location.host === "stackapps.com" ? "1" : "8"),
         success: function () {
           // NICETOHAVE: update close vote count
           console.log("Close flag/vote cast.");
