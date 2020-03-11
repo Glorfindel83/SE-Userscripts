@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.6.1
+// @version     0.7
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://stackoverflow.com/users/*
@@ -22,7 +22,7 @@
   if (userIDRegex == null)
     return; // e.g. flag summary page
   var userID = userIDRegex[1];
-  var userName = $(".name.mod-tabs").attr("title");
+  var userName = $(".name.mod-tabs").text().trim();
   var userNameIsSuspicious = typeof userName !== 'undefined' && userName.toLowerCase().contains("insur");
 
   // Find 'Mod' dialog link
@@ -74,13 +74,13 @@
 
   // Check for (deleted) questions and answers
   var questionsPanel = $('#user-panel-questions');
-  var undeletedQuestions = questionsPanel.find('td.question-hyperlink').not('.deleted-answer').length; // yes, deleted-answer. Don't ask why.
-  var deletedQuestions = questionsPanel.find('td.question-hyperlink.deleted-answer').length;
+  var undeletedQuestions = questionsPanel.find('td.question-hyperlink').not('.bg-red-050').length; // yes, deleted-answer. Don't ask why.
+  var deletedQuestions = questionsPanel.find('td.question-hyperlink.bg-red-050').length;
   if (undeletedQuestions > 0) // User has content - use the dialog instead
     return;
   var answersPanel = $('#user-panel-answers');
-  var undeletedAnswers = answersPanel.find('td.answer-hyperlink').not('.deleted-answer').length;
-  var deletedAnswers = answersPanel.find('td.answer-hyperlink.deleted-answer').length;
+  var undeletedAnswers = answersPanel.find('td.answer-hyperlink').not('.bg-red-050').length;
+  var deletedAnswers = answersPanel.find('td.answer-hyperlink.bg-red-050').length;
   if (undeletedAnswers > 0) // User has content - use the dialog instead
     return;
   if (deletedQuestions + deletedAnswers == 0 && !userNameIsSuspicious) // User has no deleted content - use the dialog instead
