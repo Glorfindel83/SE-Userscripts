@@ -61,7 +61,9 @@ stats AS (SELECT site,
   ROUND(AVG(3600 * "Views while HNQ" / CAST(EXTRACT(EPOCH FROM "HNQ duration") AS NUMERIC)), 1) AS "HNQ views per hour"
   FROM Temp
   GROUP BY site)
-SELECT stats.*, q.rank, q.percentage, s.rank, s.percentage
+SELECT stats.*,
+  q.rank AS "Rank (Questions)", q.questions AS "Questions", q.percentage AS "% of questions",
+  s.rank AS "Rank (Spots)", s.percentage AS "% of spots"
   FROM stats
   INNER JOIN sitesByQuestions AS q ON q.site = stats.site
   INNER JOIN sitesBySpots AS s ON s.site = stats.site
