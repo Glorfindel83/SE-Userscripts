@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.5
+// @version     1.6
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -80,8 +80,11 @@ function main(question) {
   if (!hasCommentPrivilege && !hasFlagPrivilege)
     return;
   
+  // Comments
   let comments = question.find('ul.comments-list');
-  
+  var welcomingComments = [];
+  var otherNonOwnerComments = [];
+
   // Add post menu button
   let menu = question.find('div.post-menu');
   menu.append($('<span class="lsep">|</span>'));
@@ -97,15 +100,22 @@ function main(question) {
     let statusText = status.length > 0 ? status[0].innerText : '';
     let closed = statusText == 'Closed.';
 
-    // Is there any comment not by the author?
+    // Analyze comments
     var hasNonOwnerComment = false;
-    comments.find('a.comment-user').each(function() {
-      if (!$(this).hasClass('owner')) {
-        hasNonOwnerComment = true;
+    comments.find('li').each(function() {
+      let commentUser = $(this).find('a.comment-user')[0];
+      if (commentUser.classList.contains('owner'))
+        return;
+      hasNonOwnerComment = true;
+      if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") >= 0) {
+        welcomingComments.push(this);
+      } else {
+        otherNonOwnerComments.push(this);
       }
     });
 
     // Determine which actions can be taken
+    can['upvote'] = hasUpvotePrivilege;
     can['comment'] = hasCommentPrivilege;
     can['downvote'] = hasDownvotePrivilege && !downvoted;
     can['flag'] = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
@@ -121,6 +131,8 @@ function main(question) {
     should['downvote'] &= score > -3;
     // Delete; only on Meta after request: https://github.com/Glorfindel83/SE-Userscripts/issues/20
     should['delete'] &= isMeta;
+    // Upvote other comments (always optional)
+    should['upvote'] = false;
     
     // Generate HTML for dialog
     var html = `
@@ -133,6 +145,9 @@ function main(question) {
               <span class="js-short-label">Please confirm you want to</span>`;
     // NICETOHAVE: hover (title) showing *why* you can't perform a certain action
     html += getHTMLForOption('comment', 'Leave a welcoming comment' + (can['comment'] && hasNonOwnerComment ? ' (note: another user already posted a comment)' : ''));
+    if (otherNonOwnerComments.length > 0) {
+      html += getHTMLForOption('upvote', 'Upvote all other comments (welcoming comments are always upvoted)');
+    }
     html += getHTMLForOption('downvote', 'Downvote the question');
     html += getHTMLForOption('flag', 'Flag the question as off-topic');
     html += getHTMLForOption('close', 'Vote to close the question as off-topic');
@@ -199,16 +214,14 @@ function main(question) {
     }
 
     if (hasUpvotePrivilege) {
-      // Upvote all comments containing "welcome to"
-      comments.find("li").each(function() {
-        if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") >= 0) {
-          // Click the "up" triangle
-          let upButtons = $(this).find("a.comment-up");
-          if (upButtons.length > 0) {
-            upButtons[0].click();
-          }
+      // Upvote comments
+      for (let comment of selected("upvote") ? welcomingComments.concat(otherNonOwnerComments) : welcomingComments) {        
+        // Click the "up" triangle
+        let upButtons = $(comment).find("a.comment-up");
+        if (upButtons.length > 0) {
+          upButtons[0].click();
         }
-      });
+      }
     }
 
     if (selected("downvote")) {
