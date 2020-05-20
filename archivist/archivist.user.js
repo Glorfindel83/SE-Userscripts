@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
-// @version     0.3
+// @version     0.4
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -125,7 +125,7 @@
             "Content-Type": "application/x-www-form-urlencoded"
           },
           onload: function(response) {
-            let match = /var JOB_ID = "([0-9a-f-]{36})";/g.exec(response.response);
+            let match = /spn.watchJob\("([0-9a-f-]{36})",/g.exec(response.response);
             if (match == null) {
               console.log("Could not determine job ID for " + archiveLink);
               next(false);
