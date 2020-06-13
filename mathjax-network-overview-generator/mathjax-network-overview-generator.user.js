@@ -58,7 +58,7 @@
       let site = sites[i];
       var extra = [];
       if (site.mhchem) extra.push('mhchem extension');
-      if (site.delim == true) extra.push('\\$ delimiters');
+      if (site.delim == true) extra.push('\\\\$ delimiters');
       markdown = markdown + '\n1. [' + site.name + '](' + site.site_url.substr(site.site_url.indexOf(':') + 1) + ')';
       if (extra.length > 0) {
         markdown += ' (with ' + extra.join(', ') + ')';
