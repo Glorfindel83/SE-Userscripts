@@ -16,8 +16,8 @@ If you have a **new** question, please ask it by clicking the [Ask Question](/qu
 ###[A] No disclosure
 Please note that you must [explicitly state](/help/promotion) that you are affiliated with the product/service/website you're linking to. Otherwise your answer may be deleted as spam.
 
-###[Q] Suggest account merge
-Please use the [Contact Us](/contact) form to have your accounts merged, to regain full control over your posts.
+###[A] Self-promotion
+Just linking to your own library or tutorial is not a good answer. Linking to it, explaining why it solves the problem, providing code on how to do so and disclaiming that you wrote it makes for a better answer. See: [What signifies “Good” self promotion?](https://meta.stackexchange.com/q/182212/295232)
 
 ###[A] No reference
 While this may be correct, we like our answers to be backed up by references. You can [edit] your answer to include one (e.g. an online dictionary). See the Help Center article [answer].
@@ -27,3 +27,12 @@ Please explain why your answer is correct; answers without explanation don't tea
 
 ###[A] Not a discussion forum
 This does not provide an answer to the question and is therefore deleted; please take a moment to read the [tour] – we're a Q&A site and not a discussion forum.
+
+###[EQ] Vandalism
+Please do not vandalize your posts. If you believe your question is not useful or is no longer useful, it should be deleted instead of editing out all of the data that actually makes it a question. By posting on the Stack Exchange network, you've granted a [non-revocable right for SE to distribute that content](/legal/terms-of-service/public#licensing) under the [CC BY-SA 4.0 license](https://creativecommons.org/licenses/by-sa/4.0). By SE policy, any vandalism will be reverted. If you want to know more about deleting a post, consider taking a look at: [How does deleting work](https://meta.stackexchange.com/q/5221/295232)?
+
+### Non-English
+Unfortunately, we accept contributions [in English only](https://meta.stackoverflow.com/q/297673/4751173).
+
+### Suggest account merge
+Please use the [Contact Us](/contact) form to have your accounts merged, to regain full control over your posts.
