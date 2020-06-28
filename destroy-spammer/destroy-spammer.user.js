@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.7
+// @version     0.8
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://stackoverflow.com/users/*
@@ -40,6 +40,7 @@
     destroySpammerLinkAdded = true;
     
     var destroyLink = document.createElement('a');
+    destroyLink.setAttribute('class', 'grid--cell');
     destroyLink.appendChild(document.createTextNode('Destroy spammer'));
     destroyLink.onclick = function () {
       // Ask for confirmation
@@ -74,7 +75,7 @@
 
   // Check for (deleted) questions and answers
   var questionsPanel = $('#user-panel-questions');
-  var undeletedQuestions = questionsPanel.find('td.question-hyperlink').not('.bg-red-050').length; // yes, deleted-answer. Don't ask why.
+  var undeletedQuestions = questionsPanel.find('td.question-hyperlink').not('.bg-red-050').length;
   var deletedQuestions = questionsPanel.find('td.question-hyperlink.bg-red-050').length;
   if (undeletedQuestions > 0) // User has content - use the dialog instead
     return;
