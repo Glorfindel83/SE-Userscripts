@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.3
+// @version     0.4
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -43,7 +43,7 @@
         }
 
         // Replace post content
-        self.innerHTML = $(data).find('div.post-text')[0].innerHTML;
+        self.innerHTML = $(data).find('div.js-post-body')[0].innerHTML;
 
         // Add link to revision history
         let postMenu = $(self.parentElement.parentElement).find('div.post-menu')[0];
