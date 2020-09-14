@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
-// @version     0.4
+// @version     0.5
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -37,7 +37,7 @@
     if (post == null) {
       post = shareButton.parents("div.answer")[0];
     }
-    let body = $(post).find("div.post-text")[0];
+    let body = $(post).find("div.js-post-body")[0];
     var images = new Set();
     $(body).find("img").each(function() {
       let tmp = document.createElement('a');
