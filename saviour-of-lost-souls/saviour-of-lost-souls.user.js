@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.6
+// @version     1.7
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -86,10 +86,11 @@ function main(question) {
   var otherNonOwnerComments = [];
 
   // Add post menu button
-  let menu = question.find('div.post-menu');
-  menu.append($('<span class="lsep">|</span>'));
-  let button = $('<a href="#" title="down-/close-/delete vote and post a welcoming comment">lost soul</a>');
-  menu.append(button);
+  let button = $('<a href="#" title="down-/close-/delete vote and post a welcoming comment">Lost soul</a>');
+  let cell = $('<div class="grid--cell"></div>');
+  cell.append(button);
+  let menu = question.find('.js-post-menu div.grid');
+  menu.append(cell);
   button.click(function() {
     // Score; downvoted or not?
     let downvoted = question.find('.js-vote-down-btn.fc-theme-primary').length > 0;

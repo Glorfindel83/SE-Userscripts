@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
-// @version     0.5
+// @version     0.6
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -57,10 +57,11 @@
     let hoverMessage = disabled ? 'No external links or images found.' : 'Archive ' + getMessage(links, images, false);
 
     // Add button
-    let menu = shareButton.parent();
-    menu.append($('<span class="lsep">|</span>'));
-    let button = $('<a href="#" style="' + (disabled ? "color: #BBB" : "") + '" title="' + hoverMessage + '">archive</a>');
-    menu.append(button);
+    let button = $('<a href="#" style="' + (disabled ? "color: #BBB" : "") + '" title="' + hoverMessage + '">Archive</a>');
+    let cell = $('<div class="grid--cell"></div>');
+    cell.append(button);
+    let menu = shareButton.parent().parent();
+    menu.append(cell);
     
     function startArchiving(event) {
       event.preventDefault();
