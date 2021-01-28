@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Stack Exchange Global Review Summary
-// @version       0.4
+// @version       0.5
 // @description   Stack Exchange network wide review summary available in your network profile
 // @author        Glorfindel
 // @attribution   Floern (https://github.com/Floern)
@@ -180,12 +180,30 @@ function showGlobalReviewSummaryLink() {
         tabs.appendChild(link);
     } else {
         let header = document.querySelector('#content h1.fs-headline1');
-        let button = $(`<div class="pl8 grid--cell" role="navigation">
+        if (header == null) {
+            // New review queue UI
+            let button = $(`<a href="//stackexchange.com/users/current?tab=reviews" class="d-inline-flex ai-center ws-nowrap s-btn s-btn__filled" style="margin-right: 20px;">
+                    Global Review Summary
+                </a>`);
+            let title = $("div.s-page-title.mb16");
+            var navigation = title.find(".s-navigation");
+            if (navigation.length == 0) {
+                // No actions yet
+                title.append($(`<div class="s-page-title--actions">
+            <div class="s-navigation">
+            </div>
+        </div>`));
+                navigation = title.find(".s-navigation");
+            }
+            navigation.prepend(button);
+        } else {
+            let button = $(`<div class="pl8 grid--cell" role="navigation">
     <a href="//stackexchange.com/users/current?tab=reviews" class="d-inline-flex ai-center ws-nowrap s-btn s-btn__filled">
         Global Review Summary
     </a>
 </div>`);
-        button.insertAfter(header);
+            button.insertAfter(header);
+        }
     }
 }
 
