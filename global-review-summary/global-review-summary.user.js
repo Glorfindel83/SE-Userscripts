@@ -400,8 +400,15 @@ function parseSiteReviewSummary(siteName, siteReviewURL, html, index) {
     pageNode.innerHTML = html;
   
     // Determine # of reviews
-    let count = pageNode.querySelector(".js-badge-progress-count").innerText;
-    let reviews = parseInt(count.replace(",", ""), 10);
+    var reviews;
+    let total = $(pageNode).find(".mt16.fs-body2").text();
+    if (total != "") {
+        // New review queue UI
+        reviews = parseInt(total.split(": ")[1]);
+    } else {
+        let count = pageNode.querySelector(".js-badge-progress-count").innerText;
+        reviews = parseInt(count.replace(",", ""), 10);
+    }
     if (reviews == 0) {
         // skip when no reviews
         return;
