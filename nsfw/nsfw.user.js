@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.4
+// @version     0.5
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -31,9 +31,10 @@
 
     // Load revision history
     let revisionHistory = $(this).find('a').attr('href');
+    let postID = parseInt(revisionHistory.split('/')[2]);
     $.get(revisionHistory, function(historyData) {
       // Find link to latest revision
-      let href = $(historyData).find('#revisions a.single-revision')[0].getAttribute('href');
+      let href = $(historyData).find(".js-revisions a[href^='/revisions/" + postID + "/']")[0].getAttribute('href');
       $.get(href, function(data) {
         // Question?
         if (self.className == 'hidden-deleted-question') {
@@ -46,10 +47,14 @@
         self.innerHTML = $(data).find('div.js-post-body')[0].innerHTML;
 
         // Add link to revision history
-        let postMenu = $(self.parentElement.parentElement).find('div.post-menu')[0];
-        $(postMenu).append($('<span class="lsep">|</span>'));
-        $(postMenu).append($('<a href="' + revisionHistory + '">revisions</a>'));
-        $('<div>post content normally hidden, but made visible by the NSFW userscript</div>').insertAfter($(postMenu));
+        let button = $('<a href="' + revisionHistory + '">Revisions</a>');
+        console.log(button);
+        let cell = $('<div class="grid--cell"></div>');
+        cell.append(button);
+        console.log(cell);
+        let menu = $(self.parentElement.parentElement).find('div.js-post-menu')[0];
+        $(menu).append(cell);
+        $('<div>post content normally hidden, but made visible by the NSFW userscript</div>').insertAfter($(menu));
       });
     });
   });

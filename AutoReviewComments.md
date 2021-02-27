@@ -25,8 +25,8 @@ Please note that you must [explicitly state](/help/promotion) that you are affil
 ###[A] Self-promotion
 Just linking to your own library or tutorial is not a good answer. Linking to it, explaining why it solves the problem, providing code on how to do so and disclaiming that you wrote it makes for a better answer. See: [What signifies “Good” self promotion?](https://meta.stackexchange.com/q/182212/295232)
 
-###[EQ] Vandalism
-Please do not vandalize your posts. If you believe your question is not useful or is no longer useful, it should be deleted instead of editing out all of the data that actually makes it a question. By posting on the Stack Exchange network, you've granted a [non-revocable right for SE to distribute that content](/legal/terms-of-service/public#licensing) under the [CC BY-SA 4.0 license](https://creativecommons.org/licenses/by-sa/4.0). By SE policy, any vandalism will be reverted. If you want to know more about deleting a post, consider taking a look at: [How does deleting work](https://meta.stackexchange.com/q/5221/295232)?
+### Vandalism
+Please do not vandalize your posts. If you believe your question is not useful or is no longer useful, it should be deleted instead of editing out all of the data that actually makes it a question. By posting on the Stack Exchange network, you've granted a [non-revocable right for SE to distribute that content](/legal/terms-of-service/public#licensing) under the CC BY-SA 4.0 license. By SE policy, any vandalism will be reverted. If you want to know more about deleting a post, consider taking a look at: [How does deleting work](https://meta.stackexchange.com/q/5221/295232)?
 
 ### Non-English
 Unfortunately, we accept contributions [in English only](https://meta.stackoverflow.com/q/297673/4751173).
