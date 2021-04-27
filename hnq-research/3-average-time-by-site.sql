@@ -1,4 +1,4 @@
-﻿SELECT RANK() OVER(ORDER BY AVG(time)),
+﻿SELECT RANK() OVER(ORDER BY AVG(time) DESC),
   site, ROUND(AVG(time), 2) AS "average time", COUNT(*) AS "# of Q"
   FROM (
     -- snapshots are 3 minutes, so 1/20 of an hour, apart
