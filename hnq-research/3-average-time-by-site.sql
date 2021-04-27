@@ -1,12 +1,10 @@
 ﻿SELECT RANK() OVER(ORDER BY AVG(time)),
   site, ROUND(AVG(time), 2) AS "average time", COUNT(*) AS "# of Q"
   FROM (
-    SELECT site, question, SUM(CASE
-    WHEN timestamp BETWEEN '2018-11-02 18:36:00' AND '2018-11-05 05:30:00'
-      OR timestamp >= '2018-11-06 06:27:00' THEN 3 -- minutes
-    ELSE 10 -- minutes
-    END) / 60.0 AS time
+    -- snapshots are 3 minutes, so 1/20 of an hour, apart
+    SELECT site, question, COUNT(*) / 20.0 AS time
       FROM snapshots
+	  WHERE timestamp BETWEEN '2020-04-01' AND '2021-04-01'
       GROUP BY site, question
       ORDER BY COUNT(*) DESC
   ) AS subquery GROUP BY site
