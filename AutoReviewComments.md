@@ -47,6 +47,14 @@ Please explain why your answer is correct; answers without explanation don't tea
 ###[A] Not a discussion forum
 This does not provide an answer to the question and is therefore deleted; please take a moment to read the [tour] – we're a Q&A site and not a discussion forum.
 
+# Puzzling
+
+###[Q] No attribution
+This looks like a puzzle you found elsewhere. For content you did not create yourself, [**proper attribution**](/help/referencing) is required. If you have permission to repost this, please edit to include (at minimum) where it came from, then vote to reopen. Posts which use someone else's content without attribution are generally [**deleted**](https://puzzling.meta.stackexchange.com/q/1348/11110).
+
+###[A] No explanation
+Unfortunately, your answer lacks an explanation of why you think it is correct, so it [may be deleted](//puzzling.meta.stackexchange.com/q/1493/11110). Answers should be a thoughtfully considered attempt to solve the puzzle that was posed, with an explanation of how you arrived at the solution and/or why you believe your solution is correct. We're looking for quality answers, not a one-line response containing the first thing that leapt to mind. Please take some time to look around and familiarize yourself with the kinds of answers that are well-received here.
+
 # Spanish Language
 
 ###[A] Answers just to say thanks / this works
