@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.6
+// @version     0.5
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -34,7 +34,7 @@
     let postID = parseInt(revisionHistory.split('/')[2]);
     $.get(revisionHistory, function(historyData) {
       // Find link to latest revision
-      let href = $(historyData).find("#revisions a[href^='/revisions/" + postID + "/']")[0].getAttribute('href');
+      let href = $(historyData).find(".js-revisions a[href^='/revisions/" + postID + "/']")[0].getAttribute('href');
       $.get(href, function(data) {
         // Question?
         if (self.className == 'hidden-deleted-question') {

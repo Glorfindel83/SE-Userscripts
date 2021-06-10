@@ -10,7 +10,7 @@ This does not really answer the question. You can [follow](https://meta.stackexc
 ###[A] Link-only answer
 While this may theoretically answer the question, [it would be preferable](https://meta.stackexchange.com/a/8259/295232) to include the essential parts of the answer here, and provide the link for reference. Link-only answers can become invalid if the linked page changes or disappears.
 
-###[A] Requests to OP for further information (>50 rep)
+###[A] Requests to OP for further information (<50 rep)
 This does not provide an answer to the question. To critique or request clarification from an author, leave a [comment](/privileges/comment) below their post.
 
 ###[A] Requests to OP for further information (<50 rep)
@@ -69,7 +69,7 @@ Unfortunately, your answer lacks an explanation of why you think it is correct, 
 ###[A] Link-only answer
 ¡Bienvenido/a a [Spanish.SE]! Si bien este enlace puede responder a la pregunta, [es mejor](https://meta.stackexchange.com/a/8259/295232) incluir las partes esenciales de la respuesta aquí y proporcionar el enlace como referencia. Las respuestas que son únicamente un enlace pueden dejar de ser válidas si la página vinculada cambia. // While this may theoretically answer the question, [it would be preferable](https://meta.stackexchange.com/a/8259/295232) to include the essential parts of the answer here, and provide the link for reference. Link-only answers can become invalid if the linked page changes or disappears.                                                                                                                                                      
 
-###[A] Requests to OP for further information (>50 rep)
+###[A] Requests to OP for further information
 ¡Bienvenido/a a [Spanish.SE]! Esto no provee una respuesta a la pregunta. Para criticar o pedir aclaración a un autor, deja un [comentario](/privileges/comment) debajo de su publicación. // This does not provide an answer to the question. To critique or request clarification from an author, leave a [comment](/privileges/comment) below their post.
 
 ###[A] Requests to OP for further information (<50 rep)                                                       
