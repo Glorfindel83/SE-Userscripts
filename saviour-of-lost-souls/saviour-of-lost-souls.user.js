@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.7
+// @version     1.7.1
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -128,8 +128,8 @@ function main(question) {
     Object.assign(should, can);
     // Comment
     should['comment'] &= !hasNonOwnerComment;
-    // Downvote (not when the post is already on -3 or lower, to be slightly more welcoming)
-    should['downvote'] &= score > -3;
+    // Downvote (only when necessary to delete the post, to be slightly more welcoming)
+    should['downvote'] &= score > -3 && !isModerator;
     // Delete; only on Meta after request: https://github.com/Glorfindel83/SE-Userscripts/issues/20
     should['delete'] &= isMeta;
     // Upvote other comments (always optional)
