@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.7.1
+// @version     1.8
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -245,9 +245,7 @@ function main(question) {
       // Flag/vote to close (which one doesn't matter for the API call)
       $.post({
         url: "https://" + document.location.host + "/flags/questions/" + postID + "/close/add",
-        data: "fkey=" + fkey + "&closeReasonId=SiteSpecific&siteSpecificCloseReasonId=" + (window.location.host === "softwarerecs.stackexchange.com" ||
-                                                                                           window.location.host === "hardwarerecs.stackexchange.com" ||
-                                                                                           window.location.host === "stackapps.com" ? "1" : "8"),
+        data: "fkey=" + fkey + "&closeReasonId=SiteSpecific&siteSpecificCloseReasonId=" + getCloseReasonID(),
         success: function () {
           // NICETOHAVE: update close vote count
           console.log("Close flag/vote cast.");
@@ -299,4 +297,18 @@ function getHTMLForOption(name, description) {
 
 function selected(name) {
   return $("#sols-" + name).prop("checked");
+}
+
+// These IDs can be found in the flag dialog, the radio buttons have IDs like "siteSpecificCloseReasonId-1-".
+function getCloseReasonID() {
+  switch (window.location.host) {
+    case "softwarerecs.stackexchange.com":
+    case "hardwarerecs.stackexchange.com":
+    case "stackapps.com":
+      return 1;
+    case "meta.stackoverflow.com":
+      return 6;
+    default:
+      return 8;
+  }
 }
