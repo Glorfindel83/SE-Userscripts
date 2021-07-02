@@ -21,7 +21,8 @@
 // @exclude     *://stackexchange.com/*
 // @grant       none
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
-// @version     1.0
+// @version     1.1
+// @history     1.1 Teams support
 // @history     1.0 Scope/SEO title. Don't run on inapplicable pages. Link SA listing page (See Tampermonkey dashboard). Clear NA TM warnings.
 // @history     0.2 Initial release
 // @homepage    https://stackapps.com/q/8054/7653
@@ -51,15 +52,25 @@ waitForKeyElements("div.tag-popup", function(jNode) {
     $(this).text("Other questions");
 
     // More info
-    let infoURL = "/tags/" + tagName + "/info";
+    let path = document.location.pathname;
+    var prefix = "";
+    if (path.startsWith("/c/")) {
+      // Teams
+      prefix = path.substring(0, path.indexOf('/', 4));
+    }
+    let infoURL = prefix + "/tags/" + tagName + "/info";
     $("<a href=\"" + infoURL + "\">More info</a>").insertBefore($(this));
     $("<span> | </span>").insertBefore($(this));
 
     // Edit/add info
     let editLink = $("<a>" + (hasInfo ? "Edit" : "Add") + " info</a>");
     editLink.click(function() {
-      $.get(infoURL, function(data) {
-        window.location.href = $(data).find("a[href^='/edit-tag-wiki/']").attr("href");
+      console.log(infoURL);
+      $.get({ url: infoURL, crossDomain: true }, function(data) {
+        console.log(data);
+        let editAnchor = $(data).find("a[href^='" + prefix + "/edit-tag-wiki/']");
+        console.log(editAnchor);
+        window.location.href = editAnchor.attr("href");
       });
     });
     editLink.insertBefore($(this));
