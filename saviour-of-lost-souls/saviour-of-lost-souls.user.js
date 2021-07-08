@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.8
+// @version     1.9
 // @match       *://meta.stackexchange.com/questions/*
 // @match       *://meta.stackoverflow.com/questions/*
 // @match       *://softwarerecs.stackexchange.com/questions/*
@@ -87,9 +87,9 @@ function main(question) {
 
   // Add post menu button
   let button = $('<a href="#" title="down-/close-/delete vote and post a welcoming comment">Lost soul</a>');
-  let cell = $('<div class="grid--cell"></div>');
+  let cell = $('<div class="flex--item"></div>');
   cell.append(button);
-  let menu = question.find('.js-post-menu div.grid');
+  let menu = question.find('.js-post-menu > div:first-child');
   menu.append(cell);
   button.click(function() {
     // Score; downvoted or not?
