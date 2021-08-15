@@ -34,6 +34,11 @@ Unfortunately, we accept contributions [in English only](https://meta.stackoverf
 ### Suggest account merge
 Please use the [Contact Us](/contact) form to have your accounts merged, to regain full control over your posts.
 
+# Apple, Chess, ELL, Stack Apps
+
+###[A] Not a discussion forum
+This does not provide an answer to the question and is therefore deleted; please take a moment to read the [tour] – we're a Q&A site and not a discussion forum.
+
 # English Language Learners
 
 ###[A] No reference
@@ -41,11 +46,6 @@ While this may be correct, we like our answers to be backed up by references. Yo
 
 ###[A] No explanation
 Please explain why your answer is correct; answers without explanation don't teach the patterns of English well and [may be deleted](https://ell.meta.stackexchange.com/q/3294/18673).
-
-# Apple, Chess, ELL
-
-###[A] Not a discussion forum
-This does not provide an answer to the question and is therefore deleted; please take a moment to read the [tour] – we're a Q&A site and not a discussion forum.
 
 # Puzzling
 

@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/archivist/archivist.user.js
-// @version     0.6
+// @version     0.7
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -57,8 +57,8 @@
     let hoverMessage = disabled ? 'No external links or images found.' : 'Archive ' + getMessage(links, images, false);
 
     // Add button
-    let button = $('<a href="#" style="' + (disabled ? "color: #BBB" : "") + '" title="' + hoverMessage + '">Archive</a>');
-    let cell = $('<div class="grid--cell"></div>');
+    let button = $('<button class="s-btn s-btn__link" type="button" href="#" style="' + (disabled ? "color: #BBB" : "") + '" title="' + hoverMessage + '">Archive</button>');
+    let cell = $('<div class="flex--item"></div>');
     cell.append(button);
     let menu = shareButton.parent().parent();
     menu.append(cell);
@@ -126,7 +126,8 @@
             "Content-Type": "application/x-www-form-urlencoded"
           },
           onload: function(response) {
-            let match = /spn.watchJob\("([0-9a-f-]{36})",/g.exec(response.response);
+            console.log(response.response);
+            let match = /spn.watchJob\("([^"]+)",/g.exec(response.response);
             if (match == null) {
               console.log("Could not determine job ID for " + archiveLink);
               next(false);
