@@ -5,21 +5,12 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     1.9
-// @match       *://meta.stackexchange.com/questions/*
-// @match       *://meta.stackoverflow.com/questions/*
-// @match       *://softwarerecs.stackexchange.com/questions/*
-// @match       *://softwarerecs.stackexchange.com/review/first-posts*
-// @match       *://hardwarerecs.stackexchange.com/questions/*
-// @match       *://hardwarerecs.stackexchange.com/review/first-posts*
+// @version     2.0
+// @match       *://meta.stackexchange.com/*
+// @match       *://meta.stackoverflow.com/*
+// @match       *://softwarerecs.stackexchange.com/*
+// @match       *://hardwarerecs.stackexchange.com/*
 // @match       *://stackapps.com/questions/*
-// @match       *://stackapps.com/review/first-posts*
-// @exclude     *://meta.stackexchange.com/questions/ask
-// @exclude     *://meta.stackoverflow.com/questions/ask
-// @exclude     *://softwarerecs.stackexchange.com/questions/ask
-// @exclude     *://hardwarerecs.stackexchange.com/questions/ask
-// @exclude     *://stackapps.com/questions/ask
-// @grant       none
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
 /* global $, waitForKeyElements */
@@ -27,7 +18,22 @@
 // These objects hold information about whether the user *can* and *should* perform certain actions.
 const can = {}, should = {};
 
-(function ($) {
+// Which site?
+let isMetaSE = location.host == 'meta.stackexchange.com';
+let isMeta = location.host.startsWith('meta');
+let isBeta = location.host == 'hardwarerecs.stackexchange.com';
+
+// My reputation / privileges
+let myReputation = parseInt($('a.my-profile div.-rep')[0].innerText.replace(/,/g, ''));
+let hasCommentPrivilege = myReputation >= (isMetaSE ? 5 : 50);
+let hasFlagPrivilege = myReputation >= 15;
+let hasUpvotePrivilege = myReputation >= 15;
+let hasDownvotePrivilege = myReputation >= (isMetaSE ? 100 : 125);
+let hasCloseVotePrivilege = myReputation >= (isBeta ? 500 : 3000);
+let hasDeleteVotePrivilege = myReputation >= (isBeta ? 4000 : 20000);
+let isModerator = $("a.js-mod-inbox-button").length > 0;
+
+(function() {
   "use strict";
   
   // Find question (works when on Q&A page)
@@ -35,20 +41,50 @@ const can = {}, should = {};
   if (question.length == 0)
     return;
 
-  main(question);  
-})(window.jQuery);
+  if (isNewUser(question)) {
+    main(question);
+  }
+})();
+
+// from https://stackoverflow.com/a/21249710/4751173
+$.fn.ownText = function() {
+  return this.eq(0).contents().filter(function() {
+     return this.nodeType === 3 // && $.trim(this.nodeValue).length;
+  }).map(function() {
+     return this.nodeValue;
+  }).get().join('');
+}
 
 // Wait for question (works when in review queue)
-waitForKeyElements('div.review-content div.question', function(jNode) {
-  main(jNode);
+waitForKeyElements('div.js-review-content div.question', function(jNode) {
+  if (isNewUser(jNode)) {
+    main(jNode);
+  }
 });
 
-function main(question) {
+// Questions (also works for new questions from the websocket)
+waitForKeyElements('div.question-summary', function(jNode) {
+  // Check if author is likely to be a lost soul
+  let reputation = jNode.find('span.reputation-score');
+  if (reputation.length == 0)
+    // IIRC this may happen for migrated questions
+    return;
+  if (reputation.ownText() != "1")
+    // not a new user
+    return;  
+  let link = jNode.find('a.started-link');
+  if (link.ownText().trim() != "asked")
+    return;
+  
+  main(null, jNode);
+});
+
+function isNewUser(question) {
   // Check if author is likely to be a lost soul
   let owner = question.find('div.post-signature.owner');
   if (owner.length == 0)
     // happens with Community Wiki posts
-    return;
+    return false;
   let reputation = owner.find('span.reputation-score')[0].innerText;
   if (reputation === "1") {
     // Do nothing: 1 rep qualifies for a lost soul
@@ -59,113 +95,133 @@ function main(question) {
     let negativeQuestionScore = parseInt(question.find('div.js-vote-count').text()) < 0;
     let numberOfReasons = (isNewContributor ? 1 : 0) + (hasLowReputation ? 1 : 0) + (negativeQuestionScore ? 1 : 0);
     if (numberOfReasons < 2)
-      return;
+      return false;
   }
-  
-  // Which site?
-  let isMetaSE = location.host == 'meta.stackexchange.com';
-  let isMeta = location.host.startsWith('meta');
-  let isBeta = location.host == 'hardwarerecs.stackexchange.com';
+  return true;
+}
 
-  // My reputation / privileges
-  let myReputation = parseInt($('a.my-profile div.-rep')[0].innerText.replace(/,/g, ''));
-  let hasCommentPrivilege = myReputation >= (isMetaSE ? 5 : 50);
-  let hasFlagPrivilege = myReputation >= 15;
-  let hasUpvotePrivilege = myReputation >= 15;
-  let hasDownvotePrivilege = myReputation >= (isMetaSE ? 100 : 125);
-  let hasCloseVotePrivilege = myReputation >= (isBeta ? 500 : 3000);
-  let hasDeleteVotePrivilege = myReputation >= (isBeta ? 4000 : 20000);
-  let isModerator = $("a.js-mod-inbox-button").length > 0;
+function main(question, summary) {  
   // Can the script do anything?
   if (!hasCommentPrivilege && !hasFlagPrivilege)
     return;
   
-  // Comments
+  let button = $('<a title="down-/close-/delete vote and post a welcoming comment">Lost soul</a>');
+  if (question == null) {
+    // Add link
+    summary.find("div.started").append(button);
+    button.click(function() {
+      // Load page (some data could be determined from the summary, but it's easier to reuse the 'main' part of the code)
+      let link = summary.find('a.started-link').prop('href');
+      $.get(link, function(data) {        
+        question = $(data).find('#question');
+        createDialog(question);
+        buttonClicked(question);
+      });
+    });
+  } else {
+    // Add post menu button
+    let cell = $('<div class="flex--item"></div>');
+    cell.append(button);
+    let menu = question.find('.js-post-menu > div:first-child');
+    menu.append(cell);
+    button.click(function() {
+      buttonClicked(question);
+    });
+    createDialog(question);
+  }
+}
+
+function buttonClicked(question) {
+  // Score; downvoted or not?
+  let downvoted = question.find('.js-vote-down-btn.fc-theme-primary').length > 0;
+  let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
+
+  // Closed?
+  let status = $('#question aside.s-notice div:first-child b');
+  let statusText = status.length > 0 ? status[0].innerText : '';
+  let closed = statusText == 'Closed.';
+
+  // Analyze comments
+  let comments = question.find('ul.comments-list');
+  var otherNonOwnerComments = [];
+  var hasNonOwnerComment = false;
+  comments.find('li').each(function() {
+    let commentUser = $(this).find('a.comment-user')[0];
+    if (commentUser.classList.contains('owner'))
+      return;
+    hasNonOwnerComment = true;
+    if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") < 0) {
+      otherNonOwnerComments.push(this);
+    }
+  });
+  
+  // Determine which actions can be taken
+  can['upvote'] = hasUpvotePrivilege;
+  can['comment'] = hasCommentPrivilege;
+  can['downvote'] = hasDownvotePrivilege && !downvoted;
+  can['flag'] = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
+  can['close'] = hasCloseVotePrivilege && !closed;
+  can['delete'] = (hasDeleteVotePrivilege && closed && score <= -3) || isModerator;
+  // TODO: also when downvote and/or close vote bring the question into deletion territory
+
+  // Determine which actions to take
+  Object.assign(should, can);
+  // Comment
+  should['comment'] &= !hasNonOwnerComment;
+  // Downvote (only when necessary to delete the post, to be slightly more welcoming)
+  should['downvote'] &= score > -3 && !isModerator;
+  // Delete; only on Meta after request: https://github.com/Glorfindel83/SE-Userscripts/issues/20
+  should['delete'] &= isMeta;
+  // Upvote other comments (always optional)
+  should['upvote'] = false;
+
+  // Generate HTML for dialog
+  var html = `
+<aside class="s-modal bg-transparent pe-none js-stacks-managed-popup js-fades-with-aria-hidden" id="modal-base" tabindex="-1" role="dialog" aria-labelledby="mod-modal-title" aria-describedby="mod-modal-description" aria-hidden="false">    
+    <form class="s-modal--dialog js-modal-dialog js-keyboard-navigable-modal pe-auto" role="document" data-controller="se-draggable" method="get" action="#">
+        <h1 class="s-modal--header fs-headline1 fw-bold mr48 c-move js-first-tabbable" id="modal-title" tabindex="0" data-target="se-draggable.handle">
+            'Saviour' of Lost Souls
+        </h1>
+        <div class="flex--item">
+            <span class="js-short-label">Please confirm you want to</span>`;
+  // NICETOHAVE: hover (title) showing *why* you can't perform a certain action
+  html += getHTMLForOption('comment', 'Leave a welcoming comment' + (can['comment'] && hasNonOwnerComment ? ' (note: another user already posted a comment)' : ''));
+  if (otherNonOwnerComments.length > 0) {
+    html += getHTMLForOption('upvote', 'Upvote all other comments (welcoming comments are always upvoted)');
+  }
+  html += getHTMLForOption('downvote', 'Downvote the question');
+  html += getHTMLForOption('flag', 'Flag the question as off-topic');
+  html += getHTMLForOption('close', 'Vote to close the question as off-topic');
+  html += getHTMLForOption('delete', 'Vote to delete the question');
+  html += `
+        </div>
+        <br/>
+        <div class="d-flex gs8 gsx s-modal--footer">
+            <button class="flex--item s-btn s-btn__primary" type="submit" onclick="saviourOfLostSouls.submitDialog();">Confirm</button>
+            <button class="flex--item s-btn js-modal-close" type="button" onclick="saviourOfLostSouls.closeDialog();">Cancel</button>
+        </div>
+        <button class="s-modal--close s-btn s-btn__muted js-modal-close js-last-tabbable" type="button" aria-label="Close" onclick="saviourOfLostSouls.closeDialog();">
+            <svg aria-hidden="true" class="svg-icon m0 iconClearSm" width="14" height="14" viewBox="0 0 14 14"><path d="M12 3.41L10.59 2 7 5.59 3.41 2 2 3.41 5.59 7 2 10.59 3.41 12 7 8.41 10.59 12 12 10.59 8.41 7 12 3.41z"></path></svg>
+        </button>
+    </form>
+</aside>`;
+  $(document.body).append($(html));
+}
+
+function createDialog(question) {  
+  // Analyze comments
   let comments = question.find('ul.comments-list');
   var welcomingComments = [];
   var otherNonOwnerComments = [];
-
-  // Add post menu button
-  let button = $('<a href="#" title="down-/close-/delete vote and post a welcoming comment">Lost soul</a>');
-  let cell = $('<div class="flex--item"></div>');
-  cell.append(button);
-  let menu = question.find('.js-post-menu > div:first-child');
-  menu.append(cell);
-  button.click(function() {
-    // Score; downvoted or not?
-    let downvoted = question.find('.js-vote-down-btn.fc-theme-primary').length > 0;
-    let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
-
-    // Closed?
-    let status = $('#question aside.s-notice div:first-child b');
-    let statusText = status.length > 0 ? status[0].innerText : '';
-    let closed = statusText == 'Closed.';
-
-    // Analyze comments
-    var hasNonOwnerComment = false;
-    comments.find('li').each(function() {
-      let commentUser = $(this).find('a.comment-user')[0];
-      if (commentUser.classList.contains('owner'))
-        return;
-      hasNonOwnerComment = true;
-      if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") >= 0) {
-        welcomingComments.push(this);
-      } else {
-        otherNonOwnerComments.push(this);
-      }
-    });
-
-    // Determine which actions can be taken
-    can['upvote'] = hasUpvotePrivilege;
-    can['comment'] = hasCommentPrivilege;
-    can['downvote'] = hasDownvotePrivilege && !downvoted;
-    can['flag'] = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
-    can['close'] = hasCloseVotePrivilege && !closed;
-    can['delete'] = (hasDeleteVotePrivilege && closed && score <= -3) || isModerator;
-    // TODO: also when downvote and/or close vote bring the question into deletion territory
-
-    // Determine which actions to take
-    Object.assign(should, can);
-    // Comment
-    should['comment'] &= !hasNonOwnerComment;
-    // Downvote (only when necessary to delete the post, to be slightly more welcoming)
-    should['downvote'] &= score > -3 && !isModerator;
-    // Delete; only on Meta after request: https://github.com/Glorfindel83/SE-Userscripts/issues/20
-    should['delete'] &= isMeta;
-    // Upvote other comments (always optional)
-    should['upvote'] = false;
-    
-    // Generate HTML for dialog
-    var html = `
-  <aside class="s-modal bg-transparent pe-none js-stacks-managed-popup js-fades-with-aria-hidden" id="modal-base" tabindex="-1" role="dialog" aria-labelledby="mod-modal-title" aria-describedby="mod-modal-description" aria-hidden="false">    
-      <form class="s-modal--dialog js-modal-dialog js-keyboard-navigable-modal pe-auto" role="document" data-controller="se-draggable se-mod-menu" data-se-mod-menu-model-type="post" data-se-mod-menu-model-id="371841" method="get" action="#" data-action="se-mod-menu#submit" data-keyboard-actions="#mod-screen-select-menu, input[name=action], .js-info-link">
-          <h1 class="s-modal--header fs-headline1 fw-bold mr48 c-move js-first-tabbable" id="modal-title" tabindex="0" data-target="se-draggable.handle">
-              'Saviour' of Lost Souls
-          </h1>
-          <div class="grid--cell">
-              <span class="js-short-label">Please confirm you want to</span>`;
-    // NICETOHAVE: hover (title) showing *why* you can't perform a certain action
-    html += getHTMLForOption('comment', 'Leave a welcoming comment' + (can['comment'] && hasNonOwnerComment ? ' (note: another user already posted a comment)' : ''));
-    if (otherNonOwnerComments.length > 0) {
-      html += getHTMLForOption('upvote', 'Upvote all other comments (welcoming comments are always upvoted)');
+  comments.find('li').each(function() {
+    let commentUser = $(this).find('a.comment-user')[0];
+    if (commentUser.classList.contains('owner'))
+      return;
+    if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") >= 0) {
+      welcomingComments.push(this);
+    } else {
+      otherNonOwnerComments.push(this);
     }
-    html += getHTMLForOption('downvote', 'Downvote the question');
-    html += getHTMLForOption('flag', 'Flag the question as off-topic');
-    html += getHTMLForOption('close', 'Vote to close the question as off-topic');
-    html += getHTMLForOption('delete', 'Vote to delete the question');
-    html += `
-          </div>
-          <br/>
-          <div class="grid gs8 gsx s-modal--footer">
-              <button class="grid--cell s-btn s-btn__primary" type="submit" onclick="saviourOfLostSouls.submitDialog();">Confirm</button>
-              <button class="grid--cell s-btn js-modal-close" type="button" onclick="saviourOfLostSouls.closeDialog();">Cancel</button>
-          </div>
-          <button class="s-modal--close s-btn s-btn__muted js-modal-close js-last-tabbable" type="button" aria-label="Close" onclick="saviourOfLostSouls.closeDialog();">
-              <svg aria-hidden="true" class="svg-icon m0 iconClearSm" width="14" height="14" viewBox="0 0 14 14"><path d="M12 3.41L10.59 2 7 5.59 3.41 2 2 3.41 5.59 7 2 10.59 3.41 12 7 8.41 10.59 12 12 10.59 8.41 7 12 3.41z"></path></svg>
-          </button>
-      </form>
-  </aside>`;
-    $(document.body).append($(html));
   });
   
   // Define functions which can be called by the dialog
@@ -180,6 +236,7 @@ function main(question) {
 
     if (selected("comment")) {
       // Post comment
+      let owner = question.find('div.post-signature.owner');
       let author = owner.find('div.user-details a')[0].innerText;
 
       let comment = window.location.host === "softwarerecs.stackexchange.com"
@@ -256,7 +313,7 @@ function main(question) {
         }
       });
     }
-    
+
     if (selected("delete")) {
       window.setTimeout(function() {
         // Delete vote
@@ -269,7 +326,7 @@ function main(question) {
             console.log("Delete vote cast.");
           },
           error: function (jqXHR, textStatus, errorThrown) {
-            window.alert("An error occurred, please try again later.");
+            window.alert("An error occurred, please try again later.");href
             console.log("Error: " + textStatus + " " + errorThrown);
           }
         });
@@ -278,19 +335,29 @@ function main(question) {
 
     // Dismiss dialog
     $("#modal-base").remove();
-    // Reload page; this is less elegant than waiting for all POST calls, but it works.
-    window.setTimeout(() => window.location.reload(false), 1000);
+    
+    // NOTE: if this is done too soon, the delete vote might not be cast.
+    if (window.location.pathname.startsWith("/questions/")
+     || window.location.pathname.startsWith("/review/")) {
+      // Reload page; this is less elegant than waiting for all POST calls, but it works.
+      window.setTimeout(() => window.location.reload(false), 1000);
+    } else {
+      // Navigate to question for confirmation
+      window.setTimeout(() => {
+        window.location.href = "https://" + window.location.host + "/questions/" + postID;
+      }, 1000);
+    }
   };
 }
 
 function getHTMLForOption(name, description) {
   return `
               <fieldset class="mt4 ml4 mb16">
-                  <div class="grid gs8 gsx ff-row-nowrap ${ can[name] ? '' : 'is-disabled' }">
-                      <div class="grid--cell">
+                  <div class="d-flex gs8 gsx ff-row-nowrap ${ can[name] ? '' : 'is-disabled' }">
+                      <div class="flex--item">
                           <input class="s-checkbox" type="checkbox" name="${ name }" id="sols-${ name }" ${ can[name] ? '' : 'disabled' } ${ should[name] ? 'checked' : '' }>
                       </div>
-                      <label class="grid--cell s-label fw-normal" for="sols-${ name }">${ description }</label>
+                      <label class="flex--item s-label fw-normal" for="sols-${ name }">${ description }</label>
                   </div>
               </fieldset>`;
 }
