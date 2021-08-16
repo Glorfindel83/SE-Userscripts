@@ -6,7 +6,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/wilson-calculator/wilson-calculator.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/wilson-calculator/wilson-calculator.user.js
 // @supportURL  https://stackapps.com/q/8561/34061
-// @version     1.0.1
+// @version     1.0.2
 // @match       *://*.stackexchange.com/questions/*
 // @match       *://*.stackoverflow.com/questions/*
 // @match       *://*.superuser.com/questions/*
@@ -90,7 +90,7 @@ function showRating(postID, post) {
   return rating;
 }
 
-const timelineButtonSelector = "a[href$='/timeline']";
+const timelineButtonSelector = "a.js-post-issue[href$='/timeline']";
 
 (() => {
   // Find timeline buttons and add Wilson buttons below them
