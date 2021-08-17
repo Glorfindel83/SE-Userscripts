@@ -5,12 +5,13 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.0
+// @version     2.0.1
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
 // @match       *://hardwarerecs.stackexchange.com/*
 // @match       *://stackapps.com/questions/*
+// @grant       none
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
 // ==/UserScript==
 /* global $, waitForKeyElements */
