@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Stack Exchange Global Review Summary
-// @version       0.5
+// @version       0.6
 // @description   Stack Exchange network wide review summary available in your network profile
 // @author        Glorfindel
 // @attribution   Floern (https://github.com/Floern)
@@ -31,10 +31,10 @@
 
 let reviewSummaryTable, reviewSummaryTableBody, errorView;
 
-let sortedColIndex = 10;
+let sortedColIndex = 12;
 let sortedColAsc = false;
 
-let reviewURIs = ["first-posts", "late-answers", "low-quality-posts", "suggested-edits",
+let reviewURIs = ["first-posts", "first-questions", "first-answers", "late-answers", "low-quality-posts", "suggested-edits",
                   "close", "reopen", "triage", "helper"];
 
 let reviewGlobalSummaryTotals = new Array(reviewURIs.length).fill(0);
@@ -111,14 +111,16 @@ let summariesPerSite = {};
         <thead>
             <tr id="review-summary-heading-labels" style="cursor:pointer">
                 <th style="text-align:left;width:160px" colspan="2">Site</th>
-                <th>FP</th>
+                <th><i>FP</i></th>
+                <th>FQ</th>
+                <th>FA</th>
                 <th>LA</th>
                 <th>LQP</th>
                 <th>SE</th>
                 <th>CV</th>
                 <th>RV</th>
                 <th>Tr</th>
-                <th>H&amp;I</th>
+                <th><i>H&amp;I</i></th>
                 <th style="padding-left:20px">total</th>
             </tr>
             <tr id="review-summary-global-stats">
@@ -404,10 +406,10 @@ function parseSiteReviewSummary(siteName, siteReviewURL, html, index) {
     let total = $(pageNode).find(".mt16.fs-body2").text();
     if (total != "") {
         // New review queue UI
-        reviews = parseInt(total.split(": ")[1]);
+        reviews = parseInt(total.split(": ")[1].replace(",", ""));
     } else {
         let count = pageNode.querySelector(".js-badge-progress-count").innerText;
-        reviews = parseInt(count.replace(",", ""), 10);
+        reviews = parseInt(count.replace(",", ""));
     }
     if (reviews == 0) {
         // skip when no reviews
