@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.0.1
+// @version     2.1
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -72,9 +72,10 @@ waitForKeyElements('div.question-summary', function(jNode) {
     return;
   if (reputation.ownText() != "1")
     // not a new user
-    return;  
+    return;
   let link = jNode.find('a.started-link');
-  if (link.ownText().trim() != "asked")
+  let action = link.length == 0 ? jNode.find('div.user-action-time') : link;
+  if (!action.text().trim().startsWith("asked "))
     return;
   
   main(null, jNode);
@@ -109,10 +110,15 @@ function main(question, summary) {
   let button = $('<a title="down-/close-/delete vote and post a welcoming comment">Lost soul</a>');
   if (question == null) {
     // Add link
-    summary.find("div.started").append(button);
+    let userInfo = summary.find("div.user-info");
+    if (userInfo.length == 0) {
+      summary.find("div.started").append(button);
+    } else {
+      userInfo.append(button);
+    }
     button.click(function() {
       // Load page (some data could be determined from the summary, but it's easier to reuse the 'main' part of the code)
-      let link = summary.find('a.started-link').prop('href');
+      let link = summary.find('a.question-hyperlink').prop('href');
       $.get(link, function(data) {        
         question = $(data).find('#question');
         createDialog(question);
@@ -339,7 +345,8 @@ function createDialog(question) {
     
     // NOTE: if this is done too soon, the delete vote might not be cast.
     if (window.location.pathname.startsWith("/questions/")
-     || window.location.pathname.startsWith("/review/")) {
+     || window.location.pathname.startsWith("/review/")
+     || !isModerator) {
       // Reload page; this is less elegant than waiting for all POST calls, but it works.
       window.setTimeout(() => window.location.reload(false), 1000);
     } else {
