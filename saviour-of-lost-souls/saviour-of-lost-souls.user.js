@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.1
+// @version     2.2
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -221,13 +221,20 @@ function createDialog(question) {
   var welcomingComments = [];
   var otherNonOwnerComments = [];
   comments.find('li').each(function() {
-    let commentUser = $(this).find('a.comment-user')[0];
+    let comment = $(this);
+    // Comment by post author?
+    let commentUser = comment.find('a.comment-user')[0];
     if (commentUser.classList.contains('owner'))
       return;
-    if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") >= 0) {
-      welcomingComments.push(this);
+    // Can we upvote it?
+    let upButtons = $(comment).find("a.comment-up");
+    if (upButtons.length == 0)
+      return;
+    // What type of comment is it?
+    if (comment.find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") >= 0) {
+      welcomingComments.push(comment);
     } else {
-      otherNonOwnerComments.push(this);
+      otherNonOwnerComments.push(comment);
     }
   });
   
@@ -281,16 +288,23 @@ function createDialog(question) {
     if (hasUpvotePrivilege) {
       // Upvote comments
       for (let comment of selected("upvote") ? welcomingComments.concat(otherNonOwnerComments) : welcomingComments) {        
-        // Click the "up" triangle
-        let upButtons = $(comment).find("a.comment-up");
-        if (upButtons.length > 0) {
-          upButtons[0].click();
-        }
+        $.post({
+          url: "https://" + document.location.host + "/posts/comments/" + comment.attr('data-comment-id') + "/vote/2", // 2 = upvote
+          data: "fkey=" + fkey,
+          success: function () {
+            // NICETOHAVE: set upvote button color
+            console.log("Comment upvoted.");
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            window.alert("An error occurred, please try again later.");
+            console.log("Error: " + textStatus + " " + errorThrown);
+          }
+        });
       }
     }
 
     if (selected("downvote")) {
-      // Downvote (not when the post is already on -3 or lower, to be slightly more welcoming)
+      // Downvote
       $.post({
         url: "https://" + document.location.host + "/posts/" + postID + "/vote/3", // 3 = downvote
         data: "fkey=" + fkey,
