@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.9
+// @version     2.10
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -157,14 +157,26 @@ function decorate($element) {
 
 // Adds pronoun information to a user card or author information
 function showPronouns($element, pronouns) {
+  // For comments, it looks better when added to the parent of the user link
+  if ($element.hasClass("comment-user")) {
+    $element = $element.parent();
+  }
+
+  // Anything to show, or already shown?
   if (pronouns == "" || $element.siblings(".pronouns").length != 0) {
     return;
   }
   
   // Make sure the pronouns don't end up between the username and the diamond
-  if ($element.next("span.mod-flair").length != 0) {
-    $element = $element.next("span.mod-flair");
-  }
+  // or staff/mod labels
+  do {
+    let $nextElement = $element.next();
+    if (!$nextElement.hasClass("mod-flair") &&
+        !$nextElement.hasClass("s-badge"))
+      break;
+    $element = $nextElement;
+  } while (true);
+  
   $element.after($('<span class="pronouns"> ' + pronouns + '</span>'));
 }
 
