@@ -34,7 +34,7 @@ Unfortunately, we accept contributions [in English only](https://meta.stackoverf
 ### Suggest account merge
 Please use the [Contact Us](/contact) form to have your accounts merged, to regain full control over your posts.
 
-# Apple, Chess, ELL, Stack Apps
+# Apple, Board & Card Games, Chess, ELL, Stack Apps
 
 ###[A] Not a discussion forum
 This does not provide an answer to the question and is therefore deleted; please take a moment to read the [tour] – we're a Q&A site and not a discussion forum.
@@ -80,3 +80,6 @@ Unfortunately, your answer lacks an explanation of why you think it is correct, 
 
 ###[A] No reference
 ¡Bienvenido/a a [Spanish.SE]! Gracias por su respuesta, seria bueno si tiene una referencia, o simplemente decir que esta es tu experiencia personal. // While this may be correct, we like our answers to be backed up by references. You can [edit] your answer to include one (e.g. an online dictionary). See the Help Center article [answer].
+
+###[Q] Blatantly off-topic
+¡Bienvenido/a a [Spanish.SE]! Tenemos un sitio [] en la red para ese tipo de problemas pero solo acepta preguntas en inglés.
