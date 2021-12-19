@@ -3,7 +3,9 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a 'Destroy spammer' link for moderator on user profiles with only deleted posts.
 // @author      Glorfindel
-// @version     0.9
+// @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/destroy-spammer/destroy-spammer.user.js
+// @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/destroy-spammer/destroy-spammer.user.js
+// @version     0.9.1
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://stackoverflow.com/users/*
@@ -12,6 +14,7 @@
 // @match       *://askubuntu.com/users/*
 // @match       *://stackapps.com/users/*
 // @match       *://mathoverflow.net/users/*
+// @exclude     *://stackexchange.com/users/*
 // @grant       none
 // ==/UserScript==
 (function () {
