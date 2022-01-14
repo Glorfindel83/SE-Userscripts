@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.2.1
+// @version     2.3
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -144,7 +144,7 @@ function buttonClicked(question) {
   let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
 
   // Closed?
-  let status = $('#question aside.s-notice div:first-child b');
+  let status = question.find('aside.s-notice div:first-child b');
   let statusText = status.length > 0 ? status[0].innerText : '';
   let closed = statusText == 'Closed.';
 
