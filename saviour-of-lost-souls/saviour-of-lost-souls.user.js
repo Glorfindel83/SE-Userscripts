@@ -5,11 +5,12 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.3
+// @version     2.4
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
 // @match       *://hardwarerecs.stackexchange.com/*
+// @match       *://mathoverflow.net/*
 // @match       *://stackapps.com/*
 // @grant       none
 // @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
@@ -130,8 +131,8 @@ function main(question, summary) {
     let cell = $('<div class="flex--item"></div>');
     cell.append(button);
     let menu = question.find('.js-post-menu > div:first-child');
-    menu.append(cell);
-    button.click(function() {
+    menu.append(cell);    
+      button.click(function() {
       buttonClicked(question);
     });
     createDialog(question);
@@ -247,7 +248,7 @@ function createDialog(question) {
     // Prepare votes/comments
     let postID = parseInt(question.attr('data-questionid'));
     let fkey = window.localStorage["se:fkey"].split(",")[0];
-
+    
     if (selected("comment")) {
       // Post comment
       let owner = question.find('div.post-signature.owner');
@@ -266,6 +267,11 @@ function createDialog(question) {
           "This question does not appear to be about the Stack Exchange API or a script or browser extension for Stack Exchange. " +
           "To get an answer from users that have the expertise about the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
           "Check [How do I ask a good question](/help/how-to-ask) and [What is on topic](/help/on-topic) on the *target* site to make sure your post is in good shape. " +
+          "Your question is definitely [off-topic](/help/on-topic) and better deleted here.")
+       : window.location.host === "mathoverflow.net"
+       ? ("Hi " + author + ", welcome to MathOverflow! " +
+          "This site is for mathematicians to ask each other questions about their research. Please have a look at [math.se] to ask general mathematics questions. " +
+          "Check [How to ask a good question](https://math.meta.stackexchange.com/q/9959/228959) to make sure your post is in good shape. " +
           "Your question is definitely [off-topic](/help/on-topic) and better deleted here.")
        : ("Hi " + author + ", welcome to Meta! " +
           "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
@@ -353,7 +359,7 @@ function createDialog(question) {
         });
       }, 500); // small delay to make sure the close vote is registered
     }
-
+    
     // Dismiss dialog
     $("#modal-base").remove();
     
@@ -397,6 +403,8 @@ function getCloseReasonID() {
       return 1;
     case "meta.stackoverflow.com":
       return 6;
+    case "mathoverflow.net":
+      return 7;
     default:
       return 8;
   }
