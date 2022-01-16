@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
-// @version     0.3
+// @version     0.4
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -37,6 +37,10 @@
     if (existingButton.length == 0) {
       // Add link to network profile
       let profile = user[0].children[0];
+      if (profile.classList.contains("system-alert")) {
+        // Suspension message, take the next one
+        profile = user[0].children[1];
+      }
       let container = profile.children[profile.children.length - 1];
       let networkProfileButton = '<a class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm" href="https://stackexchange.com/users/' + accountID + '" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm d-flex ai-center">\n' +
         '<svg aria-hidden="true" class="native mln2 mr2 svg-icon iconLogoSEXxs" width="18" height="18" viewBox="0 0 18 18"><path d="M3 4c0-1.1.9-2 2-2h8a2 2 0 012 2H3Z" fill="#8FD8F7"></path><path d="M15 11H3c0 1.1.9 2 2 2h5v3l3-3a2 2 0 002-2Z" fill="#155397"></path><path fill="#46A2D9" d="M3 5h12v2H3z"></path><path fill="#2D6DB5" d="M3 8h12v2H3z"></path></svg>\n' +
