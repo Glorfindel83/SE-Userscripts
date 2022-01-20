@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
-// @version     0.4
+// @version     0.5
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -20,7 +20,8 @@
   'use strict';
   
   // Some pages (e.g. https://*.stackexchange.com/users/message/create/*) need to be skipped
-  if (typeof(StackExchange.user) == 'undefined')
+  if (typeof(StackExchange.user) == 'undefined' ||
+      typeof(StackExchange.user.options) == 'undefined') // unregistered users
     return;
 
   StackExchange.ready(function() {
