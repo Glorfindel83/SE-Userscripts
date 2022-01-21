@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/you-earned-this-badge/you-earned-this-badge.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/you-earned-this-badge/you-earned-this-badge.user.js
-// @version     0.1
+// @version     0.2
 // @match       *://*.stackexchange.com/help/badges*
 // @match       *://*.stackoverflow.com/help/badges*
 // @match       *://*.superuser.com/help/badges*
@@ -18,13 +18,19 @@
 
 (function () {
   'use strict';
-  
-  $("span.badge-earned-check").each(function() {
+
+  function addLink() {
     var parent = $(this).parent();
     var url = parent.next().find("a").prop("href") + "?userid=" +
         /\/users\/(\d+)/g.exec($("a.my-profile").prop("href"))[1];
     var anchor = $("<a href=\"" + url + "\"/>");
     anchor.append($(this));
     parent.append(anchor);
-  });
+  };
+
+  // hyperlinks on badge list page
+  $("div.fc-success").each(addLink);
+
+  // hyperlink on badge detail page
+  $("span.badge-earned-check").each(addLink);
 }) ();
