@@ -3,6 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a link in the badges page to show your personal badge page for that badge.
 // @author      Glorfindel
+// @contributor wimglenn
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/you-earned-this-badge/you-earned-this-badge.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/you-earned-this-badge/you-earned-this-badge.user.js
 // @version     0.2
