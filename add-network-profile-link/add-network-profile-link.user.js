@@ -5,7 +5,8 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
-// @version     0.5
+// @supportURL  https://stackapps.com/q/9328/34061
+// @version     1.0
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -14,17 +15,20 @@
 // @match       *://*.stackapps.com/users/*
 // @match       *://*.mathoverflow.net/users/*
 // @exclude     *://stackexchange.com/users/*
+// @exclude     *://chat.stackexchange.com/users/*
+// @exclude     *://chat.stackoverflow.com/users/*
+// @exclude     *://chat.meta.stackexchange.com/users/*
 // @grant       none
 // ==/UserScript==
 (function () {
   'use strict';
   
-  // Some pages (e.g. https://*.stackexchange.com/users/message/create/*) need to be skipped
-  if (typeof(StackExchange.user) == 'undefined' ||
-      typeof(StackExchange.user.options) == 'undefined') // unregistered users
-    return;
-
   StackExchange.ready(function() {
+    // Some pages (e.g. https://*.stackexchange.com/users/message/create/*) need to be skipped
+    if (typeof(StackExchange.user) == 'undefined' ||
+        typeof(StackExchange.user.options) == 'undefined') // unregistered users
+      return;
+
     // Find user IDs
     let userID = StackExchange.user.options.userId;
     let accountID = StackExchange.user.options.accountId;
@@ -58,20 +62,20 @@
     
     // Add link to chat profile
     // NICETOHAVE: add as part of dropdown menu
-    var chatProfile;
+    var chatHost;
     switch (location.host) {
       case 'meta.stackexchange.com':
-        chatProfile = 'https://chat.meta.stackexchange.com/users/' + userID;
+        chatHost = 'chat.meta.stackexchange.com';
         break;
       case 'stackoverflow.com':
       case 'meta.stackoverflow.com':
-        chatProfile = 'https://chat.stackoverflow.com/users/' + userID;
+        chatHost = 'chat.stackoverflow.com';
         break;
       default:
-        chatProfile = 'https://chat.stackexchange.com/account/' + accountID;
+        chatHost = 'chat.stackexchange.com';
         break;
     }
-    existingButton.before('<a class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm" href="' + chatProfile + '" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm d-flex ai-center">\n' +
+    existingButton.before('<a class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm" href="https://' + chatHost + '/account/' + accountID + '" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm d-flex ai-center">\n' +
         'Chat profile</a>');
   });
 })();
