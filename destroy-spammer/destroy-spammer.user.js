@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/destroy-spammer/destroy-spammer.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/destroy-spammer/destroy-spammer.user.js
-// @version     0.9.1
+// @version     0.9.2
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://stackoverflow.com/users/*
@@ -15,6 +15,9 @@
 // @match       *://stackapps.com/users/*
 // @match       *://mathoverflow.net/users/*
 // @exclude     *://stackexchange.com/users/*
+// @exclude     *://chat.stackexchange.com/users/*
+// @exclude     *://chat.stackoverflow.com/users/*
+// @exclude     *://chat.meta.stackexchange.com/users/*
 // @grant       none
 // ==/UserScript==
 (function () {
