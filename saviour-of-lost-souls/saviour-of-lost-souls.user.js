@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.4
+// @version     2.5.1
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -65,17 +65,16 @@ waitForKeyElements('div.js-review-content div.question', function(jNode) {
 });
 
 // Questions (also works for new questions from the websocket)
-waitForKeyElements('div.question-summary', function(jNode) {
+waitForKeyElements('div.question-summary, div.js-post-summary', function(jNode) {
   // Check if author is likely to be a lost soul
-  let reputation = jNode.find('span.reputation-score');
+  let reputation = jNode.find('span.reputation-score, span.todo-no-class-here');
   if (reputation.length == 0)
     // IIRC this may happen for migrated questions
     return;
   if (reputation.ownText() != "1")
     // not a new user
     return;
-  let link = jNode.find('a.started-link');
-  let action = link.length == 0 ? jNode.find('div.user-action-time') : link;
+  let action = jNode.find('a.started-link, div.user-action-time, .s-user-card--time a');
   if (!action.text().trim().startsWith("asked "))
     return;
   
@@ -111,15 +110,15 @@ function main(question, summary) {
   let button = $('<a title="down-/close-/delete vote and post a welcoming comment">Lost soul</a>');
   if (question == null) {
     // Add link
-    let userInfo = summary.find("div.user-info");
+    let userInfo = summary.find("div.user-info, div.s-user-card--info");
     if (userInfo.length == 0) {
-      summary.find("div.started").append(button);
+      summary.find("div.started, div.s-user-card--time").append(button);
     } else {
       userInfo.append(button);
     }
     button.click(function() {
       // Load page (some data could be determined from the summary, but it's easier to reuse the 'main' part of the code)
-      let link = summary.find('a.question-hyperlink').prop('href');
+      let link = summary.find('a.question-hyperlink, h3.s-post-summary--content-title > a.s-link').prop('href');
       $.get(link, function(data) {        
         question = $(data).find('#question');
         createDialog(question);
@@ -145,9 +144,9 @@ function buttonClicked(question) {
   let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
 
   // Closed?
-  let status = question.find('aside.s-notice div:first-child b');
+  let status = question.find('aside.s-notice p.mb0.mt6');
   let statusText = status.length > 0 ? status[0].innerText : '';
-  let closed = statusText == 'Closed.';
+  let closed = statusText.startsWith('Closed');
 
   // Analyze comments
   let comments = question.find('ul.comments-list');
