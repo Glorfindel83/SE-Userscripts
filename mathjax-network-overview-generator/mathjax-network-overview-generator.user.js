@@ -68,7 +68,7 @@
   }
   
   // Add post menu button
-  let menu = $("#answer-216607").find('div.post-menu');
+  let menu = $("#answer-216607").find('div.js-post-menu');
   menu.append($('<span class="lsep">|</span>'));
   let button = $('<a href="#">update</a>');
   menu.append(button);
