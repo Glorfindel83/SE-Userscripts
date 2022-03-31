@@ -26,7 +26,7 @@ let isMeta = location.host.startsWith('meta');
 let isBeta = location.host == 'hardwarerecs.stackexchange.com';
 
 // My reputation / privileges
-let myReputation = parseInt($('a.my-profile div.-rep')[0].innerText.replace(/,/g, ''));
+let myReputation = parseInt($('.js-header-rep')[0].innerText.replace(/,/g, ''));
 let hasCommentPrivilege = myReputation >= (isMetaSE ? 5 : 50);
 let hasFlagPrivilege = myReputation >= 15;
 let hasUpvotePrivilege = myReputation >= 15;
