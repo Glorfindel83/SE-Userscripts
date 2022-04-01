@@ -6,7 +6,7 @@
 // @contributor wimglenn
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/you-earned-this-badge/you-earned-this-badge.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/you-earned-this-badge/you-earned-this-badge.user.js
-// @version     0.2
+// @version     0.3
 // @match       *://*.stackexchange.com/help/badges*
 // @match       *://*.stackoverflow.com/help/badges*
 // @match       *://*.superuser.com/help/badges*
@@ -23,7 +23,7 @@
   function addLink() {
     var parent = $(this).parent();
     var url = parent.next().find("a").prop("href") + "?userid=" +
-        /\/users\/(\d+)/g.exec($("a.my-profile").prop("href"))[1];
+        /\/users\/(\d+)/g.exec($("a.s-topbar--item.s-user-card").prop("href"))[1];
     var anchor = $("<a href=\"" + url + "\"/>");
     anchor.append($(this));
     parent.append(anchor);
