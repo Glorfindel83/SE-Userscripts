@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds information to a question indicating why you can't start a bounty.
 // @author      Glorfindel
-// @version     0.3
+// @version     0.4
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -70,14 +70,14 @@
   }
   
   // Get reputation of current user
-  var reputation = parseInt($("div.-rep.js-header-rep").text().replace(",", ""), 10);
+  var reputation = parseInt($(".js-header-rep").text().replace(",", ""), 10);
   if (reputation < 75) {
     addInformation("you need 75 reputation to create a bounty");
     return;
   }
   
   // Does the user have an answer to this question?
-  var profileURL = $("a.my-profile.js-gps-track").attr("href");
+  var profileURL = $("a.s-topbar--item.s-user-card").attr("href");
   var hasAnswer = $(".answercell .user-details a").is(function(index, element) {
     return $(element).attr("href") == profileURL;
   });
