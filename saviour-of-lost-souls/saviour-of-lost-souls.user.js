@@ -66,6 +66,9 @@ waitForKeyElements('div.js-review-content div.question', function(jNode) {
 
 // Questions (also works for new questions from the websocket)
 waitForKeyElements('div.question-summary, div.js-post-summary', function(jNode) {
+  // Skip deleted questions
+  if (jNode.hasClass('s-post-summary__deleted'))
+    return;
   // Check if author is likely to be a lost soul
   let reputation = jNode.find('span.reputation-score, span.todo-no-class-here');
   if (reputation.length == 0)
@@ -121,8 +124,12 @@ function main(question, summary) {
       let link = summary.find('a.question-hyperlink, h3.s-post-summary--content-title > a.s-link').prop('href');
       $.get(link, function(data) {        
         question = $(data).find('#question');
-        createDialog(question);
-        buttonClicked(question);
+        if (question.hasClass('deleted-answer')) { // sic
+          alert('The question has already been deleted, no action is necessary.');
+        } else {
+          createDialog(question);
+          buttonClicked(question);
+        }
       });
     });
   } else {
@@ -131,7 +138,7 @@ function main(question, summary) {
     cell.append(button);
     let menu = question.find('.js-post-menu > div:first-child');
     menu.append(cell);    
-      button.click(function() {
+    button.click(function() {
       buttonClicked(question);
     });
     createDialog(question);
