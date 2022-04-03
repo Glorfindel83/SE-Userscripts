@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name          Stack Exchange Global Review Summary
-// @version       0.6
+// @version       0.7
 // @description   Stack Exchange network wide review summary available in your network profile
 // @author        Glorfindel
 // @attribution   Floern (https://github.com/Floern)
@@ -111,16 +111,16 @@ let summariesPerSite = {};
         <thead>
             <tr id="review-summary-heading-labels" style="cursor:pointer">
                 <th style="text-align:left;width:160px" colspan="2">Site</th>
-                <th><i>FP</i></th>
-                <th>FQ</th>
-                <th>FA</th>
-                <th>LA</th>
-                <th>LQP</th>
-                <th>SE</th>
-                <th>CV</th>
-                <th>RV</th>
-                <th>Tr</th>
-                <th><i>H&amp;I</i></th>
+                <th title="First posts (retired)"><i>FP</i></th>
+                <th title="First questions">FQ</th>
+                <th title="First answers">FA</th>
+                <th title="Late answers">LA</th>
+                <th title="Low quality posts">LQP</th>
+                <th title="Suggested edits">SE</th>
+                <th title="Close votes">CV</th>
+                <th title="Reopen votes">RV</th>
+                <th title="Triage">Tr</th>
+                <th title="Help & Improvement (retired)"><i>H&amp;I</i></th>
                 <th style="padding-left:20px">total</th>
             </tr>
             <tr id="review-summary-global-stats">
@@ -242,15 +242,13 @@ function loadAccountList() {
 }
 
 /**
- * Parse the network account list.
+ * Parses the network account list.
  */
 function parseNetworkAccounts(html) {
-    let pageNode = document.createElement('div');
-    pageNode.innerHTML = html;
-
+    let pageNode = new DOMParser().parseFromString(html, 'text/html');
     let accounts = [];
 
-    // iterate all accounts
+    // iterate over all accounts
     let accountNodes = pageNode.querySelectorAll('.contentWrapper .account-container');
     for (let i = 0; i < accountNodes.length; ++i) {
         let accountNode = accountNodes[i];
@@ -312,7 +310,6 @@ function parseNetworkAccounts(html) {
         }
       
         let account = accounts[i];
-        let delay = 1000;
         setTimeout(function() {
             if (account.reputation >= 350) {
                 // 350 is the minimum reputation to review on beta-sites
@@ -325,9 +322,8 @@ function parseNetworkAccounts(html) {
                     method: 'GET',
                     url: url,
                     onload: function(response) {
-                        let pageNode = document.createElement('div');
-                        pageNode.innerHTML = response.response;
-                        var badges = pageNode.querySelectorAll(".user-badges a.badge");
+                        let pageNode = new DOMParser().parseFromString(response.response, 'text/html');
+                        let badges = pageNode.querySelectorAll(".user-badges a.badge");
                         var found = false;
                         for (j = 0; j < badges.length; j++) {
                             // On localized sites, this badge has a different name
@@ -351,7 +347,7 @@ function parseNetworkAccounts(html) {
                     }
                 });
             }
-        }, delay);
+        }, 1000);
     };
 
     // start 3 'threads' in parallel
@@ -373,7 +369,9 @@ function loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index)
             if (++index == reviewURIs.length) {
                 finishedCallback();
             } else {
-                loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index)
+                setTimeout(function() {
+                    loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index);
+                }, 500);
             }
             if (response.status < 400) {
                 parseSiteReviewSummary(siteName, siteReviewURL, response.response, index - 1);
@@ -387,7 +385,9 @@ function loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index)
             if (++index == reviewURIs.length) {
                 finishedCallback();
             } else {
-                loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index)
+                setTimeout(function() {
+                    loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index);
+                }, 500);
             }
             showLoadingError(siteReviewURL, response.status);
         }
@@ -395,22 +395,14 @@ function loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index)
 }
 
 /**
- * Parse the review site and extract the stats.
+ * Parse the review stats page and extract the stats.
  */
 function parseSiteReviewSummary(siteName, siteReviewURL, html, index) {
-    let pageNode = document.createElement('div');
-    pageNode.innerHTML = html;
+    let pageNode = new DOMParser().parseFromString(html, 'text/html');
   
     // Determine # of reviews
-    var reviews;
-    let total = $(pageNode).find(".mt16.fs-body2").text();
-    if (total != "") {
-        // New review queue UI
-        reviews = parseInt(total.split(": ")[1].replace(",", ""));
-    } else {
-        let count = pageNode.querySelector(".js-badge-progress-count").innerText;
-        reviews = parseInt(count.replace(",", ""));
-    }
+    let total = $(pageNode).find(".fs-body2 .fw-bold").text();
+    let reviews = parseInt(total.replace(",", ""));
     if (reviews == 0) {
         // skip when no reviews
         return;
