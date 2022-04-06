@@ -66,16 +66,16 @@
     switch (location.host) {
       case 'meta.stackexchange.com':
         chatHost = 'chat.meta.stackexchange.com';
-        chatLogo = '<div class="favicon favicon-stackexchangemeta"></div>';
+        chatLogo = '<div class="favicon favicon-stackexchangemeta"/>';
         break;
       case 'stackoverflow.com':
       case 'meta.stackoverflow.com':
         chatHost = 'chat.stackoverflow.com';
-        chatLogo = '<div class="favicon favicon-stackoverflow"></div>';
+        chatLogo = '<div class="favicon favicon-stackoverflow"/>';
         break;
       default:
         chatHost = 'chat.stackexchange.com';
-        chatLogo = '<div class="favicon favicon-stackexchangemeta"></div>';
+        chatLogo = '<div class="favicon favicon-stackexchangemeta"/>';
         break;
     }
     // If the profile has a dropdown available, insert the link as an item in the dropdown list
