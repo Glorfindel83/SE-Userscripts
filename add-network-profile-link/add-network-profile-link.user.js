@@ -83,7 +83,7 @@
         let profileItems = $('#profiles-menu').find('.s-menu');
         let teamsSeparatorIndex = profileItems.find('.s-menu--title').index();
         if(teamsSeparatorIndex > -1) {
-            profileItems.find('li').eq(teamsSeparatorIndex ).before('<li role="menuitem" id="chatprofile"><a href="https://' + chatHost + '/account/' + accountID + '" class="s-block-link d-flex ai-center ws-nowrap">' + chatLogo + '  Chat profile</a></li>');
+            profileItems.find('li').eq(teamsSeparatorIndex).before('<li role="menuitem" id="chatprofile"><a href="https://' + chatHost + '/account/' + accountID + '" class="s-block-link d-flex ai-center ws-nowrap">' + chatLogo + '  Chat profile</a></li>');
         }
         else {
             profileItems.append('<li role="menuitem" id="chatprofile"><a href="https://' + chatHost + '/account/' + accountID + '" class="s-block-link d-flex ai-center ws-nowrap">' + chatLogo + '  Chat profile</a></li>');
