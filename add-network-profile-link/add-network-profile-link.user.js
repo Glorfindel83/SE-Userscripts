@@ -61,21 +61,37 @@
     }
     
     // Add link to chat profile
-    // NICETOHAVE: add as part of dropdown menu
     var chatHost;
+    var chatLogo;
     switch (location.host) {
       case 'meta.stackexchange.com':
         chatHost = 'chat.meta.stackexchange.com';
+        chatLogo = '<div class="favicon favicon-stackexchangemeta"/>';
         break;
       case 'stackoverflow.com':
       case 'meta.stackoverflow.com':
         chatHost = 'chat.stackoverflow.com';
+        chatLogo = '<div class="favicon favicon-stackoverflow"/>';
         break;
       default:
         chatHost = 'chat.stackexchange.com';
+        chatLogo = '<div class="favicon favicon-stackexchangemeta"/>';
         break;
     }
-    existingButton.before('<a class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm" href="https://' + chatHost + '/account/' + accountID + '" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm d-flex ai-center">\n' +
+    // If the profile has a dropdown available, insert the link as an item in the dropdown list
+    if(existingButton[0].classList.contains('s-btn__dropdown')) {
+        let profileItems = $('#profiles-menu').find('.s-menu');
+        let teamsSeparatorIndex = profileItems.find('.s-menu--title').index();
+        if(teamsSeparatorIndex > -1) {
+            profileItems.find('li').eq(teamsSeparatorIndex).before('<li role="menuitem" id="chatprofile"><a href="https://' + chatHost + '/account/' + accountID + '" class="s-block-link d-flex ai-center ws-nowrap">' + chatLogo + '  Chat profile</a></li>');
+        }
+        else {
+            profileItems.append('<li role="menuitem" id="chatprofile"><a href="https://' + chatHost + '/account/' + accountID + '" class="s-block-link d-flex ai-center ws-nowrap">' + chatLogo + '  Chat profile</a></li>');
+        }
+    }
+    else {
+        existingButton.before('<a class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm" href="https://' + chatHost + '/account/' + accountID + '" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm d-flex ai-center">\n' +
         'Chat profile</a>');
+    }
   });
 })();
