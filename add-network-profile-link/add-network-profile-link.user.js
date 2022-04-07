@@ -3,10 +3,11 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a link to the network profile for all user profile pages (even if they've hidden the current community) and a link to the chat profile
 // @author      Glorfindel
+// @contributor Spevacus
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @supportURL  https://stackapps.com/q/9328/34061
-// @version     1.0
+// @version     1.1
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
