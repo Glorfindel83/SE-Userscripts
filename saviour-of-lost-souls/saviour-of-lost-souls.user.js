@@ -151,9 +151,9 @@ function buttonClicked(question) {
   let score = parseInt(question.find('div.js-vote-count')[0].innerText.replace(/,/g, ''));
 
   // Closed?
-  let status = question.find('aside.s-notice p.mb0.mt6');
+  let status = question.find('aside.s-notice b');
   let statusText = status.length > 0 ? status[0].innerText : '';
-  let closed = statusText.startsWith('Closed');
+  let closed = statusText == 'Closed.';
 
   // Analyze comments
   let comments = question.find('ul.comments-list');
