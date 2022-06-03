@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.7
+// @version     2.7.1
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -90,7 +90,11 @@ function isNewUser(question) {
   if (owner.length == 0)
     // happens with Community Wiki posts
     return false;
-  let reputation = owner.find('span.reputation-score')[0].innerText;
+  let $reputation = owner.find('span.reputation-score');
+  if ($reputation.length == 0)
+    // happens with deleted users
+    return false;
+  let reputation = $reputation[0].innerText;
   if (reputation === "1") {
     // Do nothing: 1 rep qualifies for a lost soul
   } else {
