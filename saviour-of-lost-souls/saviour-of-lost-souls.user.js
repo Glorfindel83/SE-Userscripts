@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.7.2
+// @version     2.7.3
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -412,7 +412,7 @@ function getCloseReasonID() {
     case "stackapps.com":
       return 1;
     case "mathoverflow.net":
-      return 5;
+      return 9;
     case "meta.stackoverflow.com":
       return 6;
     default:
