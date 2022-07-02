@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a button to check activity from an IP address on other sites you're moderating, and one to dump all activity from a certain IP address (currently questions only)
 // @author      Glorfindel
-// @version     0.2
+// @version     0.3
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/cross-site-ip-checker/cross-site-ip-checker.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/cross-site-ip-checker/cross-site-ip-checker.user.js
 // @match       *://*.stackexchange.com/admin/users-with-ip/*
@@ -20,6 +20,7 @@
 // ==/UserScript==
 /* global $, waitForKeyElements */
 
+var crossSiteCheckButton, activityDumpButton;
 var urls, users, questions;
 const fkey = window.localStorage["se:fkey"].split(",")[0];
 
@@ -27,9 +28,12 @@ const fkey = window.localStorage["se:fkey"].split(",")[0];
   'use strict';
 
   // Add buttons
-  let crossSiteCheckButton = $('<a href="#" class="d-inline-flex ai-center ws-nowrap s-btn s-btn__filled" style="float: right;">Cross-site check</a>');
+  crossSiteCheckButton = $('<a href="#" class="d-inline-flex ai-center ws-nowrap s-btn s-btn__filled" style="float: right;">Cross-site check</a>');
   $("h1").after(crossSiteCheckButton);
   crossSiteCheckButton.click(function () {
+    crossSiteCheckButton.attr("disabled", true);
+    crossSiteCheckButton.text("Checking ...");
+    
     // On which sites do I have a diamond?
     let cacheExpiration = window.localStorage.getItem("CrossSiteIPChecker-CacheExpiration");
     if (cacheExpiration != null && new Date(cacheExpiration) > new Date()) {
@@ -64,9 +68,12 @@ const fkey = window.localStorage["se:fkey"].split(",")[0];
     });
   });
   
-  let activityDumpButton = $('<a href="#" class="d-inline-flex ai-center ws-nowrap s-btn s-btn__filled" style="float: right; margin-left: 20px;">Activity dump</a>');
+  activityDumpButton = $('<a href="#" class="d-inline-flex ai-center ws-nowrap s-btn s-btn__filled" style="float: right; margin-left: 20px;">Activity dump</a>');
   $("h1").after(activityDumpButton);
   activityDumpButton.click(function () {
+    activityDumpButton.attr("disabled", true);
+    activityDumpButton.text("Analyzing ...");
+
     urls = []; users = []; questions = [];
     for (let anchor of $("tbody a[href^='/users/']")) {
       urls.push(anchor.href);
@@ -165,7 +172,14 @@ function analyzeNextUser() {
           + allIP.accounts + ' | ' + allIP.timesSeen + ' |';
       }
       
+      //
       console.log(message);
+      navigator.clipboard.writeText(message).then(function () {
+        activityDumpButton.text("Dump copied to clipboard!");
+      }, function(err) {
+        activityDumpButton.text("Please check the browser console.");
+        console.log(err);
+      });
     }, 2000);
     return;
   }
