@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.7.3
+// @version     2.8
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -285,7 +285,7 @@ function createDialog(question) {
           "Your question is definitely [off-topic](/help/on-topic) and better deleted here.")
        : ("Hi " + author + ", welcome to the Stack Exchange Network Meta site! " +
           "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
-          "To get an experts answer for the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
+          "To get an expert's answer for the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
           "Check [How do I ask a good question](/help/how-to-ask) and [What is on topic](/help/on-topic) on the *target* site to make sure your post is in good shape. " +
           "Your question is definitely off-topic on [Meta](/help/whats-meta) and is better deleted here.");
       $.post({
