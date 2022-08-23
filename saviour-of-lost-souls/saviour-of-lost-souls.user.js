@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a shortcut to down-/close-/delete vote and post a welcoming comment to Lost Souls on Meta Stack Exchange and some other sites.
 // @author      Glorfindel
-// @version     2.8
+// @version     2.9
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -312,7 +312,7 @@ function createDialog(question, reviewItemID) {
           "This site is for mathematicians to ask each other questions about their research. Please have a look at [math.se] to ask general mathematics questions. " +
           "Check [How to ask a good question](https://math.meta.stackexchange.com/q/9959/228959) to make sure your post is in good shape. " +
           "Your question is definitely [off-topic](/help/on-topic) and better deleted here.")
-       : ("Hi " + author + ", welcome to the Stack Exchange Network Meta site! " +
+       : ("Hi " + author + ", welcome to the Stack " + (window.location.host === "meta.stackexchange.com" ? "Exchange Network" : "Overflow") + " Meta site! " +
           "I'm not sure which search brought you here but the problem you describe will not be answered on this specific site. " +
           "To get an expert's answer for the topic of your question you'll have to find and then re-post on the [proper site](https://stackexchange.com/sites). " +
           "Check [How do I ask a good question](/help/how-to-ask) and [What is on topic](/help/on-topic) on the *target* site to make sure your post is in good shape. " +
