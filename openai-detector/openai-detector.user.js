@@ -56,6 +56,30 @@
   function inPage() {
     const isMS = window.location.hostname === 'metasmoke.erwaysoftware.com';
 
+    /**
+     * Extracts and prepates just the post text ignoring notices.
+     * @param {jQuery} post - container where the body can be found as a child
+     * @return {string} text to analyse
+     */
+    function extractPostText(post) {
+      const postBody = post.find(".js-post-body").clone();
+      //remove post notices
+      postBody.find("aside").remove();
+
+      return cleanText(postBody.text());
+    }
+
+    /**
+     * Try to clean text for handing over to the detector.
+     * @param {string} text - content of a post
+     * @return {string} a cleaned version of the post with newlines removed
+     */
+    function cleanText(text) {
+      return text
+        .trim()
+        .replace(/\n/g, " ");
+    }
+
     function updateButtonTextWithPercent(button, percent) {
       button.text(button.text().replace(/(?: \(\d+(?:\.\d+)?%\)$|$)/, ` (${percent}%)`));
     }
