@@ -42,6 +42,7 @@
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
+/* globals StackExchange, $ */
 
 waitForKeyElements("div.js-post-menu", function(jNode) {
   // Regular posts
