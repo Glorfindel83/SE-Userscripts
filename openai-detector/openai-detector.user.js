@@ -45,18 +45,18 @@
 
 waitForKeyElements("div.js-post-menu", function(jNode) {
   // Regular posts
-  let menu = $(jNode);
+  const menu = $(jNode);
 
   // Add button
-  let button = $('<button class="s-btn s-btn__link" type="button" href="#">Detect OpenAI</button>');
-  let cell = $('<div class="flex--item"></div>');
+  const button = $('<button class="s-btn s-btn__link" type="button" href="#">Detect OpenAI</button>');
+  const cell = $('<div class="flex--item"></div>');
   cell.append(button);
   menu.children().first().append(cell);
 
   button.on('click', function() {
-    let post = button.parents(".answercell, .postcell");
+    const post = button.parents(".answercell, .postcell");
 
-    let text = extractPostText(post);
+    const text = extractPostText(post);
     detectAI(text);
   });
 });
@@ -90,20 +90,20 @@ function cleanText(text) {
 
   // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
   $("a[href$='/view-source']").each(function() {
-    let sourceButton = $(this);
+    const sourceButton = $(this);
 
     // Add button
-    let button = $('<a href="#" class="flex--item" title="detect OpenAI">Detect OpenAI</a>');
-    let menu = sourceButton.parent();
+    const button = $('<a href="#" class="flex--item" title="detect OpenAI">Detect OpenAI</a>');
+    const menu = sourceButton.parent();
     menu.append(button);
 
     button.on('click', function() {
-      let linkURL = sourceButton.attr("href");
-      let sourceURL = new URL(linkURL, window.location.origin);
+      const linkURL = sourceButton.attr("href");
+      const sourceURL = new URL(linkURL, window.location.origin);
 
       $.get(sourceURL, function(result) {
-        let sourcePage = new DOMParser().parseFromString(result, "text/html");
-        let text = cleanText(sourcePage.body.textContent);
+        const sourcePage = new DOMParser().parseFromString(result, "text/html");
+        const text = cleanText(sourcePage.body.textContent);
         detectAI(text);
       });
     });
