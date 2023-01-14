@@ -55,36 +55,16 @@ waitForKeyElements("div.js-post-menu", function(jNode) {
   menu.children().first().append(cell);
 
   button.on('click', function() {
-    const post = button.parents(".answercell, .postcell");
-
-    const text = extractPostText(post);
-    detectAI(text);
+    const button = $(this);
+    const postMenu = button.closest("div.js-post-menu");
+    const postId = postMenu.data("post-id");
+    $.get(`/posts/${postId}/edit-inline`, function(result) {
+      const sourcePage = new DOMParser().parseFromString(result, "text/html");
+      const textarea = sourcePage.querySelector("textarea[name='post-text']");
+      const postMarkdown = textarea.value;
+      detectAI(postMarkdown);
   });
 });
-
-/**
- * Extracts and prepates just the post text ignoring notices.
- * @param {jQuery} post - container where the body can be found as a child
- * @return {string} text to analyse
- */
-function extractPostText(post) {
-  const postBody = post.find(".js-post-body").clone();
-  //remove post notices
-  postBody.find("aside").remove();
-
-  return cleanText(postBody.text());
-}
-
-/**
- * Try to clean text for handing over to the detector.
- * @param {string} text - content of a post
- * @return {string} a cleaned version of the post with newlines removed
- */
-function cleanText(text) {
-  return text
-    .trim()
-    .replace(/\n/g, " ");
-}
 
 (function () {
   "use strict";
@@ -100,11 +80,9 @@ function cleanText(text) {
 
     button.on('click', function() {
       const linkURL = sourceButton.attr("href");
-      const sourceURL = new URL(linkURL, window.location.origin);
-
-      $.get(sourceURL, function(result) {
+      $.get(linkURL, function(result) {
         const sourcePage = new DOMParser().parseFromString(result, "text/html");
-        const text = cleanText(sourcePage.body.textContent);
+        const text = sourcePage.body.textContent.trim();
         detectAI(text);
       });
     });
