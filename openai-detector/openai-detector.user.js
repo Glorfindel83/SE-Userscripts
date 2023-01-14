@@ -31,7 +31,6 @@
 // @exclude     *://*.stackapps.com/questions/ask
 // @exclude     *://*.mathoverflow.net/questions/ask
 // @connect     openai-openai-detector.hf.space
-// @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
@@ -143,10 +142,19 @@
   });
 
   function detectAI(text) {
-    return GM.xmlHttpRequest({
-      method: "GET",
-      url: "https://openai-openai-detector.hf.space/openai-detector?" + encodeURIComponent(text),
-      timeout: 60000,
+    // The GM polyfill doesn't convert GM_xmlhttpRequest to a useful Promise in all userscript managers (i.e. Violentmonkey), so...
+    const gmXmlhttpRequest = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : GM.xmlHttpRequest;
+    const baseURL = "https://openai-openai-detector.hf.space/openai-detector";
+    return new Promise((resolve, reject) => {
+      gmXmlhttpRequest({
+        method: "GET",
+        url: `${baseURL}?${encodeURIComponent(text)}`,
+        timeout: 60000, // There's no particular reason for this length, but don't want to hang forever.
+        onload: resolve,
+        onabort: reject,
+        onerror: reject,
+        ontimeout: reject,
+      });
     })
       .then((response) => {
         const data = JSON.parse(response.responseText);
@@ -156,6 +164,9 @@
           StackExchange.helpers.showToast(message);
         }
         return percent;
+      }, (rejectInfo) => {
+        console.error('OpenAI Detector error response:', rejectInfo);
+        alert(`OpenAI Detector encountered a problem getting data from ${baseURL}. The browser console may have more information.`);
       });
   }
 })();
