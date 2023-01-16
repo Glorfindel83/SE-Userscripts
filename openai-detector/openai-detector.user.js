@@ -2,7 +2,8 @@
 // @name        Stack Exchange, OpenAI detector
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a button to check the probability that a post was written by a bot
-// @author      Glorfindel
+// @contributor Glorfindel
+// @contributor Makyen
 // @contributor PurpleMagick
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
@@ -95,7 +96,7 @@
       });
     }
 
-    function addButonToPostMenu() {
+    function addButtonToPostMenu() {
       // Regular posts
       const menu = $(this);
       // Add button
@@ -108,7 +109,7 @@
 
     function addButtonToAllPostMenus() {
       $("div.js-post-menu:not(.SEOAID-post-menu-button-added)")
-        .each(addButonToPostMenu)
+        .each(addButtonToPostMenu)
         .addClass("SEOAID-post-menu-button-added");
     }
 
@@ -119,7 +120,7 @@
       requestOpenAIDetectionDataForButton(button, postMarkdown);
     }
 
-    function addButonToMSMarkdownTab() {
+    function addButtonToMSMarkdownTab() {
       // Regular posts
       const tabContent = $(this);
       // Add button
@@ -132,7 +133,7 @@
 
     function addButtonToAllMSMarkdownTabs() {
       $("div.post-body-panel-markdown:not(.SEOAID-markdown-button-added)")
-        .each(addButonToMSMarkdownTab)
+        .each(addButtonToMSMarkdownTab)
         .addClass("SEOAID-markdown-button-added");
     }
 
