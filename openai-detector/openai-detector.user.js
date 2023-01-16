@@ -7,28 +7,22 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @supportURL  https://stackapps.com/questions/9611/openai-detector
-// @version     0.7
-// @match       *://*.stackexchange.com/questions/*
-// @match       *://*.stackexchange.com/posts/*/revisions
-// @match       *://*.stackexchange.com/review/*
-// @match       *://*.stackoverflow.com/questions/*
-// @match       *://*.stackoverflow.com/posts/*/revisions
-// @match       *://*.stackoverflow.com/review/*
-// @match       *://*.superuser.com/questions/*
-// @match       *://*.superuser.com/posts/*/revisions
-// @match       *://*.superuser.com/review/*
-// @match       *://*.serverfault.com/questions/*
-// @match       *://*.serverfault.com/posts/*/revisions
-// @match       *://*.serverfault.com/review/*
-// @match       *://*.askubuntu.com/questions/*
-// @match       *://*.askubuntu.com/posts/*/revisions
-// @match       *://*.askubuntu.com/review/*
-// @match       *://*.stackapps.com/questions/*
-// @match       *://*.stackapps.com/posts/*/revisions
-// @match       *://*.stackapps.com/review/*
-// @match       *://*.mathoverflow.net/questions/*
-// @match       *://*.mathoverflow.net/posts/*/revisions
-// @match       *://*.mathoverflow.net/review/*
+// @version     0.8
+// @match       *://*.askubuntu.com/*
+// @match       *://*.mathoverflow.net/*
+// @match       *://*.serverfault.com/*
+// @match       *://*.stackapps.com/*
+// @match       *://*.stackexchange.com/*
+// @match       *://*.stackoverflow.com/*
+// @match       *://*.superuser.com/*
+// @match       *://metasmoke.erwaysoftware.com/*
+// @exclude     *://stackexchange.com/*
+// @exclude     *://api.*
+// @exclude     *://blog.*
+// @exclude     *://chat.*
+// @exclude     *://data.*
+// @exclude     *://stackoverflow.com/jobs*
+// @exclude     *://*/tour
 // @exclude     *://*.stackexchange.com/questions/ask
 // @exclude     *://*.stackoverflow.com/questions/ask
 // @exclude     *://*.superuser.com/questions/ask
@@ -37,85 +31,180 @@
 // @exclude     *://*.stackapps.com/questions/ask
 // @exclude     *://*.mathoverflow.net/questions/ask
 // @connect     openai-openai-detector.hf.space
-// @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
-// @require     https://gist.github.com/raw/2625891/waitForKeyElements.js
+// @require     https://cdn.jsdelivr.net/gh/makyen/extension-and-userscript-utilities@94cbac04cb446d35dd025974a7575b25b9e134ca/executeInPage.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
-
-waitForKeyElements("div.js-post-menu", function(jNode) {
-  // Regular posts
-  let menu = $(jNode);
-
-  // Add button
-  let button = $('<button class="s-btn s-btn__link" type="button" href="#">Detect OpenAI</button>');
-  let cell = $('<div class="flex--item"></div>');
-  cell.append(button);
-  menu.children().first().append(cell);
-
-  button.on('click', function() {
-    let post = button.parents(".answercell, .postcell");
-
-    let text = extractPostText(post);
-    detectAI(text);
-  });
-});
-
-/**
- * Extracts and prepates just the post text ignoring notices.
- * @param {jQuery} post - container where the body can be found as a child
- * @return {string} text to analyse
- */
-function extractPostText(post) {
-  const postBody = post.find(".js-post-body").clone();
-  //remove post notices
-  postBody.find("aside").remove();
-
-  return cleanText(postBody.text());
-}
-
-/**
- * Try to clean text for handing over to the detector.
- * @param {string} text - content of a post
- * @return {string} a cleaned version of the post with newlines removed
- */
-function cleanText(text) {
-  return text
-    .trim()
-    .replace(/\n/g, " ");
-}
+/* globals StackExchange, $, makyenUtilities */
 
 (function () {
   "use strict";
 
-  // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
-  $("a[href$='/view-source']").each(function() {
-    let sourceButton = $(this);
+  /*
+   * For security reasons, Greasemonkey puts userscripts in a context other than the page
+   * context.  The GM.xmlHttpRequest() function is only available in that context, not in
+   * the page context.  Most of this script relies on jQuery and access to the StackExchange
+   * Object.  Both of those are in the page context.  So, most of the script, everything in
+   * the inPage() function, is placed in the page context.  For the page context to get the
+   * detection data, an event, "OAID-request-detection-data", is dispatched with the text to
+   * pass to the OpenAI detector on the button which has been clicked.  Once the data is
+   * received, the "OAID-receive-detection-data" event is dispatched with the data received
+   * from the OpenAI Detector.
+  */
 
-    // Add button
-    let button = $('<a href="#" class="flex--item" title="detect OpenAI">Detect OpenAI</a>');
-    let menu = sourceButton.parent();
-    menu.append(button);
+  function inPage() {
+    const isMS = window.location.hostname === 'metasmoke.erwaysoftware.com';
 
-    button.on('click', function() {
-      let linkURL = sourceButton.attr("href");
-      let sourceURL = new URL(linkURL, window.location.origin);
+    function updateButtonTextWithPercent(button, percent) {
+      button.text(button.text().replace(/(?: \(\d+(?:\.\d+)?%\)$|$)/, ` (${percent}%)`));
+    }
 
-      $.get(sourceURL, function(result) {
-        let sourcePage = new DOMParser().parseFromString(result, "text/html");
-        let text = cleanText(sourcePage.body.textContent);
-        detectAI(text);
+    function receiveOpenAIDetectionDataForButton(event) {
+      const data = JSON.parse(event.detail);
+      const percent = Math.round(data.fake_probability * 10000) / 100;
+      const message = `According to Hugging Face, the chance that this post was generated by OpenAI is ${percent}%`;
+      if (!isMS) {
+        StackExchange.helpers.showToast(message);
+      }
+      updateButtonTextWithPercent($(event.originalTarget), percent);
+    }
+    window.addEventListener('OAID-receive-detection-data', receiveOpenAIDetectionDataForButton);
+
+    function requestOpenAIDetectionDataForButton(button, text) {
+      button[0].dispatchEvent(new CustomEvent('OAID-request-detection-data', {
+        bubbles: true,
+        cancelable: true,
+        detail: JSON.stringify(text),
+      }));
+      /*
+      detectAI(text).then((percent) => {
+        updateButtonTextWithPercent(button, percent);
+      });
+      */
+    }
+
+    function handlePostMenuButtonClick() {
+      const button = $(this);
+      const postMenu = button.closest("div.js-post-menu");
+      const postId = postMenu.data("post-id");
+      $.get(`/posts/${postId}/edit-inline`, function(result) {
+        const sourcePage = new DOMParser().parseFromString(result, "text/html");
+        const textarea = sourcePage.querySelector("textarea[name='post-text']");
+        const postMarkdown = textarea.value;
+        requestOpenAIDetectionDataForButton(button, postMarkdown);
+      });
+    }
+
+    function addButonToPostMenu() {
+      // Regular posts
+      const menu = $(this);
+      // Add button
+      const button = $('<button class="s-btn s-btn__link SEOAID-post-menu-button" type="button" href="#">Detect OpenAI</button>');
+      const cell = $('<div class="flex--item SEOAID-post-menu-item"></div>');
+      cell.append(button);
+      menu.children().first().append(cell);
+      button.on('click', handlePostMenuButtonClick);
+    }
+
+    function addButtonToAllPostMenus() {
+      $("div.js-post-menu:not(.SEOAID-post-menu-button-added)")
+        .each(addButonToPostMenu)
+        .addClass("SEOAID-post-menu-button-added");
+    }
+
+    function handleMSMarkdownButtonClick() {
+      const button = $(this);
+      const tabContent = button.closest("div.post-body-panel-markdown");
+      const postMarkdown = tabContent.children(".post-body-pre-block").html();
+      requestOpenAIDetectionDataForButton(button, postMarkdown);
+    }
+
+    function addButonToMSMarkdownTab() {
+      // Regular posts
+      const tabContent = $(this);
+      // Add button
+      const button = $('<button class="SEOAID-markdown-button" type="button" href="#">Detect OpenAI</button>');
+      const cell = $('<div class="SEOAID-Markdown-button-cntainer"></div>');
+      cell.append(button);
+      tabContent.append(cell);
+      button.on('click', handleMSMarkdownButtonClick);
+    }
+
+    function addButtonToAllMSMarkdownTabs() {
+      $("div.post-body-panel-markdown:not(.SEOAID-markdown-button-added)")
+        .each(addButonToMSMarkdownTab)
+        .addClass("SEOAID-markdown-button-added");
+    }
+
+    function doAddButtonToAllMSMarkdownTabsSoon() {
+      setTimeout(addButtonToAllMSMarkdownTabs, 25);
+    }
+
+    if (isMS) {
+      addButtonToAllMSMarkdownTabs();
+      $(document)
+        .on('turbolinks:load', doAddButtonToAllMSMarkdownTabsSoon)
+        .ajaxComplete(doAddButtonToAllMSMarkdownTabsSoon);
+    } else {
+      addButtonToAllPostMenus()
+      StackExchange.ready(addButtonToAllPostMenus);
+      $(document).ajaxComplete(function() {
+        addButtonToAllPostMenus();
+        setTimeout(addButtonToAllPostMenus, 175); // SE uses a 150ms animation for SE.realtime.reloadPosts(). This runs after that.
+      });
+    }
+
+    // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
+    $("a[href$='/view-source']").each(function() {
+      const sourceButton = $(this);
+
+      // Add button
+      const button = $('<a href="#" class="flex--item" title="detect OpenAI">Detect OpenAI</a>');
+      const menu = sourceButton.parent();
+      menu.append(button);
+
+      button.on('click', function() {
+        const linkURL = sourceButton.attr("href");
+        $.get(linkURL, function(result) {
+          const sourcePage = new DOMParser().parseFromString(result, "text/html");
+          const text = sourcePage.body.textContent.trim();
+          requestOpenAIDetectionDataForButton(button, text);
+        });
       });
     });
-  });
+  }
+  makyenUtilities.executeInPage(inPage, true, 'OpenAI-detector-page-script');
+
+  function receiveRequestForDataFromPage(event) {
+    const text = JSON.parse(event.detail);
+    detectAI(text).then((jsonData) => {
+      event.originalTarget.dispatchEvent(new CustomEvent('OAID-receive-detection-data', {
+        bubbles: true,
+        cancelable: true,
+        detail: jsonData,
+      }));
+    });
+  }
+  window.addEventListener('OAID-request-detection-data', receiveRequestForDataFromPage);
+
+  function detectAI(text) {
+    // The GM polyfill doesn't convert GM_xmlhttpRequest to a useful Promise in all userscript managers (i.e. Violentmonkey), so...
+    const gmXmlhttpRequest = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : GM.xmlHttpRequest;
+    const baseURL = "https://openai-openai-detector.hf.space/openai-detector";
+    return new Promise((resolve, reject) => {
+      gmXmlhttpRequest({
+        method: "GET",
+        url: `${baseURL}?${encodeURIComponent(text)}`,
+        timeout: 60000, // There's no particular reason for this length, but don't want to hang forever.
+        onload: resolve,
+        onabort: reject,
+        onerror: reject,
+        ontimeout: reject,
+      });
+    })
+      .then((response) => response.responseText, (rejectInfo) => {
+        console.error('OpenAI Detector error response:', rejectInfo);
+        alert(`OpenAI Detector encountered a problem getting data from ${baseURL}. The browser console may have more information.`);
+      });
+  }
 })();
-
-function detectAI(text) {
-  $.ajaxSetup({ cache: true });
-
-  $.get("https://openai-openai-detector.hf.space/openai-detector?" + encodeURIComponent(text), function (data) {
-    let message = "According to Hugging Face, the chance that this post was generated by OpenAI is "
-      + Math.round(data.fake_probability * 100, 2) + "%.";
-    StackExchange.helpers.showToast(message);
-  });
-}
