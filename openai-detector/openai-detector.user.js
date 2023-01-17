@@ -156,7 +156,7 @@
     }
 
     // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
-    $("a[href$='/view-source']").each(function() {
+     $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
       const sourceButton = $(this);
 
       // Add button
