@@ -77,11 +77,6 @@
         cancelable: true,
         detail: JSON.stringify(text),
       }));
-      /*
-      detectAI(text).then((percent) => {
-        updateButtonTextWithPercent(button, percent);
-      });
-      */
     }
 
     function handlePostMenuButtonClick() {
