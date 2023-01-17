@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @supportURL  https://stackapps.com/questions/9611/openai-detector
-// @version     0.8
+// @version     0.9
 // @match       *://*.askubuntu.com/*
 // @match       *://*.mathoverflow.net/*
 // @match       *://*.serverfault.com/*
