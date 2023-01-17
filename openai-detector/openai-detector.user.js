@@ -76,6 +76,7 @@
     window.addEventListener('OAID-receive-detection-data', receiveOpenAIDetectionDataForButton);
 
     function requestOpenAIDetectionDataForButton(button, text) {
+      button.blur();
       if (!isMS) {
         StackExchange.helpers.addSpinner(button);
       }
