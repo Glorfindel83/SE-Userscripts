@@ -160,7 +160,7 @@
       const sourceButton = $(this);
 
       // Add button
-      const button = $('<a href="#" class="flex--item" title="detect OpenAI">Detect OpenAI</a>');
+      const button = $('<button type="button" class="flex--item s-btn s-btn__link" title="detect OpenAI">Detect OpenAI</button>');
       const menu = sourceButton.parent();
       menu.append(button);
 
