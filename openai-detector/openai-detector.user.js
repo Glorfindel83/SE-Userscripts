@@ -156,26 +156,28 @@
         addButtonToAllPostMenus();
         setTimeout(addButtonToAllPostMenus, 175); // SE uses a 150ms animation for SE.realtime.reloadPosts(). This runs after that.
       });
-    }
 
-    // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
-    $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
-      const sourceButton = $(this);
+      if (/^\/posts\/\d+\/revisions/.test(window.location.pathname)) {
+        // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
+        $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
+          const sourceButton = $(this);
 
-      // Add button
-      const button = $('<button type="button" class="flex--item s-btn s-btn__link" title="detect OpenAI">Detect OpenAI</button>');
-      const menu = sourceButton.parent();
-      menu.append(button);
+          // Add button
+          const button = $('<button type="button" class="flex--item s-btn s-btn__link" title="detect OpenAI">Detect OpenAI</button>');
+          const menu = sourceButton.parent();
+          menu.append(button);
 
-      button.on('click', function() {
-        const linkURL = sourceButton.attr("href");
-        $.get(linkURL, function(result) {
-          const sourcePage = new DOMParser().parseFromString(result, "text/html");
-          const text = sourcePage.body.textContent.trim();
-          requestOpenAIDetectionDataForButton(button, text);
+          button.on('click', function() {
+            const linkURL = sourceButton.attr("href");
+            $.get(linkURL, function(result) {
+              const sourcePage = new DOMParser().parseFromString(result, "text/html");
+              const text = sourcePage.body.textContent.trim();
+              requestOpenAIDetectionDataForButton(button, text);
+            });
+          });
         });
-      });
-    });
+      }
+    }
   }
   makyenUtilities.executeInPage(inPage, true, 'OpenAI-detector-page-script');
 
