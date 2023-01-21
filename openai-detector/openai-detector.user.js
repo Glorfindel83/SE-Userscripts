@@ -57,7 +57,7 @@
     const isMS = window.location.hostname === 'metasmoke.erwaysoftware.com';
 
     /**
-     * Extracts and prepates just the post text ignoring notices.
+     * Extracts and prepares just the post text ignoring notices.
      * @param {jQuery} post - container where the body can be found as a child
      * @return {string} text to analyse
      */
@@ -115,12 +115,20 @@
       const button = $(this);
       const postMenu = button.closest("div.js-post-menu");
       const postId = postMenu.data("post-id");
-      $.get(`/posts/${postId}/edit-inline`, function(result) {
-        const sourcePage = new DOMParser().parseFromString(result, "text/html");
-        const textarea = sourcePage.querySelector("textarea[name='post-text']");
-        const postMarkdown = textarea.value;
-        requestOpenAIDetectionDataForButton(button, postMarkdown);
-      });
+      $.get(`/posts/${postId}/edit-inline`)
+        .then(function(result) {
+          const sourcePage = new DOMParser().parseFromString(result, "text/html");
+          const textarea = sourcePage.querySelector("textarea[name='post-text']");
+          const postMarkdown = textarea.value;
+          return postMarkdown;
+        }, function() {
+          // Getting the Markdown failed. Use the HTML in the page.
+          const post = button.parents(".answercell, .postcell");
+          return jQuery.Deferred().resolve(extractPostText(post));
+        })
+        .then(function(textToTest) {
+          requestOpenAIDetectionDataForButton(button, textToTest);
+        });
     }
 
     function addButtonToPostMenu() {
