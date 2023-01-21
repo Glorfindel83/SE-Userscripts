@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @supportURL  https://stackapps.com/questions/9611/openai-detector
-// @version     0.9
+// @version     0.10
 // @match       *://*.askubuntu.com/*
 // @match       *://*.mathoverflow.net/*
 // @match       *://*.serverfault.com/*
@@ -159,7 +159,7 @@
     }
 
     // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
-    $("a[href$='/view-source']").each(function() {
+    $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
       const sourceButton = $(this);
 
       // Add button
