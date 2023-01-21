@@ -61,7 +61,7 @@
     }
 
     function receiveOpenAIDetectionDataForButton(event) {
-      const button = $(event.originalTarget);
+      const button = $(event.target);
       if (!isMS) {
         StackExchange.helpers.removeSpinner(button);
       }
@@ -182,7 +182,7 @@
   function receiveRequestForDataFromPage(event) {
     const text = JSON.parse(event.detail);
     detectAI(text).then((jsonData) => {
-      event.originalTarget.dispatchEvent(new CustomEvent('OAID-receive-detection-data', {
+      event.target.dispatchEvent(new CustomEvent('OAID-receive-detection-data', {
         bubbles: true,
         cancelable: true,
         detail: jsonData,
