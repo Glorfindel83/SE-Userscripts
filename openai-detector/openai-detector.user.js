@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/openai-detector/openai-detector.user.js
 // @supportURL  https://stackapps.com/questions/9611/openai-detector
-// @version     0.10
+// @version     0.11
 // @match       *://*.askubuntu.com/*
 // @match       *://*.mathoverflow.net/*
 // @match       *://*.serverfault.com/*
@@ -61,7 +61,7 @@
     }
 
     function receiveOpenAIDetectionDataForButton(event) {
-      const button = $(event.originalTarget);
+      const button = $(event.target);
       if (!isMS) {
         StackExchange.helpers.removeSpinner(button);
       }
@@ -182,7 +182,7 @@
   function receiveRequestForDataFromPage(event) {
     const text = JSON.parse(event.detail);
     detectAI(text).then((jsonData) => {
-      event.originalTarget.dispatchEvent(new CustomEvent('OAID-receive-detection-data', {
+      event.target.dispatchEvent(new CustomEvent('OAID-receive-detection-data', {
         bubbles: true,
         cancelable: true,
         detail: jsonData,
