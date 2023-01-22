@@ -36,7 +36,7 @@
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
-/* globals StackExchange, $, makyenUtilities */
+/* globals StackExchange, $, jQuery, makyenUtilities */
 
 (function () {
   "use strict";
@@ -54,6 +54,16 @@
   */
 
   function inPage() {
+    const postsCache = {};
+    const SE_API_CONSTANTS = {
+      key: 'b4pJgQpVylPHom5vj811QQ((',
+      posts: {
+        filter: '!3yXujnEzOWHFVt)rv',
+        state: 'PublishedAndStagingGround', // Currently only valid on /posts and /questions
+        pagesize: 100,
+      },
+      urlPrefix: 'https://api.stackexchange.com/2.4',
+    };
     const isMS = window.location.hostname === 'metasmoke.erwaysoftware.com';
 
     /**
@@ -111,20 +121,200 @@
       }));
     }
 
+    // chunkArray is copied from Unclosed Request Review Script https://github.com/SO-Close-Vote-Reviewers/UserScripts/blob/master/UnclosedRequestReview.user.js
+    // This portion was written by Makyen in 2018 and is under an MIT licese.
+    function chunkArray(array, chunkSize) {
+      //Chop a single array into an array of arrays. Each new array contains chunkSize number of
+      //  elements, except the last one.
+      var chunkedArray = [];
+      var startIndex = 0;
+      while (array.length > startIndex) {
+        chunkedArray.push(array.slice(startIndex, startIndex + chunkSize));
+        startIndex += chunkSize;
+      }
+      return chunkedArray;
+    }
+
+    function chunkArrayAndGetChunkForId(id, array, chunkSize) {
+      let included = null;
+      if (array.includes(id)) {
+        included = id;
+      } else {
+        let idAsNumber = null;
+        const idAsString = id.toString();
+        if (typeof id === 'number') {
+          idAsNumber = id;
+        } else {
+          if (Number(id).toString() === id) {
+            idAsNumber = Number(id);
+          }
+        }
+        if (idAsNumber !== null && array.includes(idAsNumber)) {
+          included = idAsNumber;
+        } else if (array.includes(idAsString)) {
+          included = idAsString;
+        }
+      }
+      if (included !== null) {
+        if (array.length <= chunkSize) {
+          return array;
+        } // else
+        const chunks = chunkArray(array, chunkSize);
+        return chunks.find((chunk) => chunk.includes(included))[0]
+      } // else
+      return [];
+    }
+
+    function getSeApiSiteParamFromDomain(hostname) {
+      /*
+       * This works for all sites when using the main domain for the site. It doesn't work for all the aliases for the sites.
+       * Handling URLs which use site aliases is not needed here, as we're getting URLs from a live page, which will already have been
+       * redirected to the main domain.
+       * See https://api.stackexchange.com/docs/sites#pagesize=1000&filter=!-*khQZ0uAf1l&run=true
+       * and run: JSON.parse($('.result').text()).items.forEach(({site_url, api_site_parameter}) => {const calcParam = new URL(site_url).hostname.split('.com')[0].replace(/\.stackexchange/g, ''); if (calcParam !== api_site_parameter) {console.log('calcParam:', calcParam, ':: api param:', api_site_parameter, ':: url:', site_url)}});
+       */
+      if (/(?:askubuntu.com|mathoverflow.net|serverfault.com|stackapps.com|stackexchange.com|stackoverflow.com|superuser.com)/i.test(hostname)) {
+        return hostname
+          .split('.com')[0]
+          .replace(/\.stackexchange/g, '');
+      } // else
+      return null;
+    }
+
+    function getSeApiSiteParamAndPostIDFromUrl(url) {
+      const urlObj = new URL(url, window.location.href);
+      const [ _, postType, postQuestionOrAnswerId] = urlObj.pathname.split('/');
+      if (/^\d+$/.test(postQuestionOrAnswerId)) {
+        let postId = null;
+        if (['posts', 'q', 'questions', 'a'].includes(postType)) {
+          const answerId = (urlObj.hash.match(/^#(\d+)$/) || [null, null])[1];
+          if (['q', 'questions'].includes(postType) && answerId) {
+            // Using a hash to indicate the answer at the end of either a /posts/<id>/<something> URL or an /a/ URL isn't valid.
+            postId = answerId;
+          } else {
+            postId = postQuestionOrAnswerId;
+          }
+          const seApiSiteParam = getSeApiSiteParamFromDomain(urlObj.hostname);
+          if (seApiSiteParam) {
+            return [seApiSiteParam, postId];
+          } // else
+        } // else
+      } // else
+      return [null, null];
+    }
+
+    function getAllLinkedPostIdsWithSameSeApiParam(urlSeApiParam) {
+      if (urlSeApiParam) {
+        return [...new Set($('a[href]')
+          .toArray()
+          .map((el) => getSeApiSiteParamAndPostIDFromUrl(el.href))
+          .map(([seApiParam, postId]) => urlSeApiParam === seApiParam ? postId.toString() : null)
+          .filter((value) => value !== null))]
+      } // else
+      return [];
+    }
+
+    function getPostsFromSeApi(site, postIds) {
+      /*
+       * We don't handle rate limiting, at all. Only one fetch will be done per user action. It's assumed that the
+       * time between user actions that would cause more than one request to the SE API will result in periods of time
+       * that are sufficiently long apart such that we don't need to worry about rate limiting, backoff, and handling
+       * the various errors which are alternate methods of rate limiting. If the script is changed such that there
+       * might be multiple fetches (e.g. if posts are auto-checked per page and a user opens multiple pages in different
+       * tabs), then we should handle rate limiting, and do so across multiple tabs.
+       */
+      if (postIds.length > 0) {
+        const params = Object.assign({
+          site,
+          key: SE_API_CONSTANTS.key,
+        }, SE_API_CONSTANTS.posts);
+        const url = `${SE_API_CONSTANTS.urlPrefix}/posts/${postIds.join(';')}`;
+        return $.get(url, params);
+      } // else
+      return jQuery.Deferred().reject('No posts to fetch from SE API');
+    }
+
+    function verifySitePostCacheExists(site) {
+      if (typeof postsCache[site] !== 'object') {
+        postsCache[site] = {};
+      }
+    }
+
+    function addPostsToPostsCache(site, items) {
+      verifySitePostCacheExists(site);
+      const siteObj = postsCache[site];
+      items.forEach((item) => {
+        siteObj[item.post_id.toString()] = item;
+      });
+    }
+
+    function getCachedMarkdown(site, id) {
+      const markdown = postsCache[site]?.[id.toString()]?.body_markdown;
+      if (markdown) {
+        return jQuery.Deferred().resolve(markdown);
+      } // else
+      return jQuery.Deferred().reject('Post Markdown not cached');
+    }
+
+    function addPostsForSiteFromSeAPIToCache(site, id) {
+      const allPostIdsOnPageForSite = getAllLinkedPostIdsWithSameSeApiParam(site);
+      verifySitePostCacheExists(site);
+      const postSiteCache = postsCache[site];
+      // We don't want to be repeatedly fetching data from the SE API when we've already tried and failed. So, we indicate which ones are being fetched and didn't return data.
+      const idsNotInCache = allPostIdsOnPageForSite.filter((id) => !postSiteCache[id]);
+      const idChunk = chunkArrayAndGetChunkForId(id, idsNotInCache, SE_API_CONSTANTS.posts.pagesize);
+      idChunk.forEach((chunkId) => {
+        postSiteCache[chunkId] = {fetching: true};
+      });
+      return getPostsFromSeApi(site, idChunk)
+        .then((seAPIResponse) => {
+          addPostsToPostsCache(site, seAPIResponse.items);
+          idChunk.forEach((chunkId) => {
+            if (postSiteCache[chunkId].fetching === true) {
+              postSiteCache[chunkId] = {noResponse: true};
+            }
+          });
+        }, () => {
+          // There was an error from the SE API. We want to be able to try to fetch data for these posts again.
+          idChunk.forEach((chunkId) => {
+            if (postSiteCache[chunkId].fetching === true || postSiteCache[chunkId].noResponse === true) {
+              delete postSiteCache[chunkId];
+            }
+          });
+        });
+    }
+
     function handlePostMenuButtonClick() {
       const button = $(this);
       const postMenu = button.closest("div.js-post-menu");
+      const shareLink = postMenu.find('.js-share-link').first();
+      const shareUrl = shareLink[0].href;
+      const [site, sharePostId] = getSeApiSiteParamAndPostIDFromUrl(shareUrl);
+      verifySitePostCacheExists(site);
       const postId = postMenu.data("post-id");
-      $.get(`/posts/${postId}/edit-inline`)
-        .then(function(result) {
-          const sourcePage = new DOMParser().parseFromString(result, "text/html");
-          const textarea = sourcePage.querySelector("textarea[name='post-text']");
-          const postMarkdown = textarea.value;
-          return postMarkdown;
-        }, function() {
-          // Getting the Markdown failed. Use the HTML in the page.
-          const post = button.parents(".answercell, .postcell");
-          return jQuery.Deferred().resolve(extractPostText(post));
+      getCachedMarkdown(site, sharePostId)
+        .then(null, () => {
+          // The post Markdown isn't in the postCache. Fetch data from the SE API for the page and try the cache again.
+          return addPostsForSiteFromSeAPIToCache(site, sharePostId)
+            .then(() => getCachedMarkdown(site, sharePostId));
+        })
+        .then(null, () => {
+          // The post Markdown isn't in the postCache after getting data from the SE API. Get it from edit-inline.
+          return $.get(`/posts/${sharePostId}/edit-inline`)
+            .then(function(result) {
+              const sourcePage = new DOMParser().parseFromString(result, "text/html");
+              const textarea = sourcePage.querySelector("textarea[name='post-text']");
+              const postMarkdown = textarea.value;
+              postsCache[site][sharePostId] = {
+                body_markdown: postMarkdown,
+                post_id: sharePostId,
+              };
+              return postMarkdown;
+            }, function() {
+              // Getting the Markdown failed. Use the HTML in the page.
+              const post = button.parents(".answercell, .postcell");
+              return jQuery.Deferred().resolve(extractPostText(post));
+            });
         })
         .then(function(textToTest) {
           requestOpenAIDetectionDataForButton(button, textToTest);
