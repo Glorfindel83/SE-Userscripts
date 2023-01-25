@@ -7,15 +7,8 @@
 // @author      rene
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/mathjax-network-overview-generator/mathjax-network-overview-generator.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/mathjax-network-overview-generator/mathjax-network-overview-generator.user.js
-// @version     0.2
-// @connect     *.stackexchange.com
-// @connect     stackoverflow.com
-// @connect     *.stackoverflow.com
-// @connect     superuser.com
-// @connect     serverfault.com
-// @connect     askubuntu.com
-// @connect     mathoverflow.net
-// @connect     stackapps.com
+// @version     0.3
+// @connect     *
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
@@ -25,7 +18,7 @@
 
 (function () {
   "use strict";
-  
+
   var sites = [];
 
   function checkConfig(siteIndex) {
@@ -66,12 +59,13 @@
     }
     console.log(markdown);
   }
-  
+
   // Add post menu button
   let menu = $("#answer-216607").find('div.js-post-menu');
-  menu.append($('<span class="lsep">|</span>'));
-  let button = $('<a href="#">update</a>');
-  menu.append(button);
+  let cell = $('<div class="flex--item"></div>');
+  let button = $('<button class="s-btn s-btn__link" type="button" href="#" style="" title="Update MathJax network overview">Update overview</button>');
+  cell.append(button);
+  menu.children().first().append(cell);
   button.click(function() {
     alert('Click OK and open the browser console to view the progress and to show the final markdown.');
     // Call Stack Exchange API to find which sites have MathJax enabled
@@ -88,7 +82,7 @@
       checkConfig(0);
     });
   });
-  
+
   // testing
   // sites.push({ name: "Mathematics", site_url: "https://math.stackexchange.com" })
   // sites.push({ name: "Role-Playing Games", site_url: "https://rpg.stackexchange.com" });
