@@ -4,10 +4,11 @@
 // @description Adds a link to the network profile for all user profile pages (even if they've hidden the current community) and a link to the chat profile
 // @author      Glorfindel
 // @contributor Spevacus
+// @contributor Cody Gray
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
-// @supportURL  https://stackapps.com/q/9328/34061
-// @version     1.1
+// @supportURL  https://stackapps.com/q/9328
+// @version     1.2
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -16,83 +17,84 @@
 // @match       *://*.stackapps.com/users/*
 // @match       *://*.mathoverflow.net/users/*
 // @exclude     *://stackexchange.com/users/*
+// @exclude     *://area51.stackexchange.com/users/*
 // @exclude     *://chat.stackexchange.com/users/*
 // @exclude     *://chat.stackoverflow.com/users/*
 // @exclude     *://chat.meta.stackexchange.com/users/*
 // @grant       none
 // ==/UserScript==
+/* globals $:readonly, StackExchange:readonly */
 (function () {
   'use strict';
-  
-  StackExchange.ready(function() {
-    // Some pages (e.g. https://*.stackexchange.com/users/message/create/*) need to be skipped
-    if (typeof(StackExchange.user) == 'undefined' ||
-        typeof(StackExchange.user.options) == 'undefined') // unregistered users
-      return;
 
-    // Find user IDs
-    let userID = StackExchange.user.options.userId;
-    let accountID = StackExchange.user.options.accountId;
-    
-    // Check if link already present
-    let user = $(".user-show-new");
-    var existingButton = user.find("button[aria-controls='profiles-menu']");
-    if (existingButton.length == 0) {
-      existingButton = user.find("a.s-btn[href^='https://stackexchange.com/users/']").parents("ul");
+  StackExchange.ready(function() {
+    // Attempt to get user IDs.
+    // These will not be available on some pages (e.g. https://*.stackexchange.com/users/message/create/*).
+    // We will skip (bail out) for all pages where this information is not accessible.
+    if (typeof(StackExchange) === 'undefined') return;
+    const userID = StackExchange.user?.options?.userId;
+    const chatID = StackExchange.user?.options?.accountId;
+    if ((typeof(userID) === 'undefined') ||
+        (typeof(chatID) === 'undefined')) return;
+
+    // Check if link to the network profile is already present.
+    const user = $(".user-show-new");
+    let existingButton = user.find('button[aria-controls="profiles-menu"]');
+    if (existingButton.length === 0) {
+      existingButton = user.find('a.s-btn[href^="https://stackexchange.com/users/"]').parents('ul');
     }
-    if (existingButton.length == 0) {
-      // Add link to network profile
+    if (existingButton.length === 0) {
+      // Add button linking to the network profile.
+      existingButton = user.find('a.s-btn[href*="/users/"]').parents('ul');
       let profile = user[0].children[0];
-      if (profile.classList.contains("system-alert")) {
-        // Suspension message, take the next one
-        profile = user[0].children[1];
-      }
-      let container = profile.children[profile.children.length - 1];
-      let networkProfileButton = '<a class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm" href="https://stackexchange.com/users/' + accountID + '" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm d-flex ai-center">\n' +
-        '<svg aria-hidden="true" class="native mln2 mr2 svg-icon iconLogoSEXxs" width="18" height="18" viewBox="0 0 18 18"><path d="M3 4c0-1.1.9-2 2-2h8a2 2 0 012 2H3Z" fill="#8FD8F7"></path><path d="M15 11H3c0 1.1.9 2 2 2h5v3l3-3a2 2 0 002-2Z" fill="#155397"></path><path fill="#46A2D9" d="M3 5h12v2H3z"></path><path fill="#2D6DB5" d="M3 8h12v2H3z"></path></svg>\n' +
-        'Network profile</a>';
-      // Main/meta profile switcher?
-      existingButton = user.find("a.s-btn[href*='/users/']").parents("ul");
-      if (existingButton.length == 0) {
+      if (profile.classList.contains('system-alert')) profile = user[0].children[1]; // this is a suspension message; take the next one
+      const networkProfileButton = `<a href="https://stackexchange.com/users/${chatID}" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm">
+                                      <svg aria-hidden="true" class="native mln2 mr2 svg-icon iconLogoSEXxs" width="18" height="18" viewBox="0 0 18 18"><path d="M3 4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2H3Z" fill="#8FD8F7"></path><path d="M15 11H3c0 1.1.9 2 2 2h5v3l3-3a2 2 0 0 0 2-2Z" fill="#155397"></path><path fill="#46A2D9" d="M3 5h12v2H3z"></path><path fill="#2D6DB5" d="M3 8h12v2H3z"></path></svg>
+                                      Network profile
+                                    </a>`;
+      if (existingButton.length === 0) {
+        const container = profile.children[profile.children.length - 1];
         container.innerHTML = networkProfileButton;
         existingButton = $(container).children();
       } else {
         existingButton.after(networkProfileButton);
       }
     }
-    
-    // Add link to chat profile
-    var chatHost;
-    var chatLogo;
+
+    // Prepare link to chat profile.
+    let chatHost;
+    let chatName;
     switch (location.host) {
       case 'meta.stackexchange.com':
         chatHost = 'chat.meta.stackexchange.com';
-        chatLogo = '<div class="favicon favicon-stackexchangemeta"/>';
+        chatName = 'stackexchangemeta';
         break;
       case 'stackoverflow.com':
       case 'meta.stackoverflow.com':
         chatHost = 'chat.stackoverflow.com';
-        chatLogo = '<div class="favicon favicon-stackoverflow"/>';
+        chatName = 'stackoverflow';
         break;
       default:
         chatHost = 'chat.stackexchange.com';
-        chatLogo = '<div class="favicon favicon-stackexchangemeta"/>';
+        chatName = 'stackexchangemeta';
         break;
     }
-    // If the profile has a dropdown available, insert the link as an item in the dropdown list
-    if(existingButton[0].classList.contains('s-btn__dropdown')) {
-        let profileItems = $('#profiles-menu').find('.s-menu');
-        let teamsSeparatorIndex = profileItems.find('.s-menu--title').index();
-        if(teamsSeparatorIndex > -1) {
-            profileItems.find('li').eq(teamsSeparatorIndex).before('<li role="menuitem" id="chatprofile"><a href="https://' + chatHost + '/account/' + accountID + '" class="s-block-link d-flex ai-center ws-nowrap">' + chatLogo + '  Chat profile</a></li>');
-        }
-        else {
-            profileItems.append('<li role="menuitem" id="chatprofile"><a href="https://' + chatHost + '/account/' + accountID + '" class="s-block-link d-flex ai-center ws-nowrap">' + chatLogo + '  Chat profile</a></li>');
-        }
+    const chatLogo = `<div class="favicon favicon-${chatName}" title="Chat site favicon"/>`;
+    const chatLink = `${location.protocol}//${chatHost}/${(chatID !== -1) ? 'account' : 'users'}/${chatID}`;
+
+    // If the profile page uses a dropdown, insert link to chat profile as the first item in the list;
+    // otherwise, insert it as a button (like the "Edit profile" button).
+    if (existingButton[0].classList.contains('s-btn__dropdown')) {
+        const profileItems = $('#profiles-menu').find('.s-menu');
+        profileItems.prepend(`<li role="menuitem"><a class="s-block-link d-flex ai-center ws-nowrap" href="${chatLink}">${chatLogo}<div class="ml4">Chat profile</div></a></li>`);
     }
     else {
-        existingButton.before('<a class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm" href="https://' + chatHost + '/account/' + accountID + '" class="d-flex ai-center ws-nowrap s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm d-flex ai-center">\n' +
-        'Chat profile</a>');
+        existingButton.before(`<a href="${chatLink}" class="flex--item s-btn s-btn__outlined s-btn__muted s-btn__icon s-btn__sm">
+                                 <svg aria-hidden="true" class="svg-icon iconSpeechBubbleSm" width="14" height="14" viewBox="0 0 14 14">
+                                   <path d="m4 11-3 3V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H4Z"></path>
+                                   </svg>
+                                 Chat profile
+                               </a>`);
     }
   });
 })();
