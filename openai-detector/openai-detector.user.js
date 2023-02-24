@@ -66,6 +66,20 @@
     };
     const isMS = window.location.hostname === 'metasmoke.erwaysoftware.com';
 
+    // unescapeHTMLText was copied by the author from the FIRE userscript.
+    /**
+     * unescapeHTMLText - Unescapes HTML text.
+     * @param   {string}    htmlIn    HTML text to unescape
+     * @returns {string}              Unescaped, and unsafe, HTML text
+     */
+    function unescapeHTMLText(htmlIn) {
+      // It's necessary here to not use a <textarea> which is created from the document.createElement(), as that can
+      //   result in executing code in some corner cases.
+      const textarea = document.implementation.createHTMLDocument().createElement('textarea');
+      textarea.innerHTML = htmlIn;
+      return textarea.textContent;
+    }
+
     /**
      * Extracts and prepares just the post text ignoring notices.
      * @param {jQuery} post - container where the body can be found as a child
@@ -87,6 +101,7 @@
     function cleanText(text) {
       return text
         .trim()
+        .replaceAll('\r\n', ' ')
         .replace(/\n/g, " ");
     }
 
@@ -248,10 +263,15 @@
       });
     }
 
-    function getCachedMarkdown(site, id) {
+    function getCachedUnescapedMarkdown(site, id) {
+      let unescapedMarkdown = postsCache[site]?.[id.toString()]?.unescapedBodyMarkdown;
       const markdown = postsCache[site]?.[id.toString()]?.body_markdown;
-      if (markdown) {
-        return jQuery.Deferred().resolve(markdown);
+      if (!unescapedMarkdown && markdown) {
+        unescapedMarkdown = unescapeHTMLText(markdown);
+        postsCache[site][id.toString()].unescapedBodyMarkdown = unescapedMarkdown;
+      }
+      if (unescapedMarkdown) {
+        return jQuery.Deferred().resolve(unescapedMarkdown);
       } // else
       return jQuery.Deferred().reject('Post Markdown not cached');
     }
@@ -292,11 +312,11 @@
       const [site, sharePostId] = getSeApiSiteParamAndPostIDFromUrl(shareUrl);
       verifySitePostCacheExists(site);
       const postId = postMenu.data("post-id");
-      getCachedMarkdown(site, sharePostId)
+      getCachedUnescapedMarkdown(site, sharePostId)
         .then(null, () => {
           // The post Markdown isn't in the postCache. Fetch data from the SE API for the page and try the cache again.
           return addPostsForSiteFromSeAPIToCache(site, sharePostId)
-            .then(() => getCachedMarkdown(site, sharePostId));
+            .then(() => getCachedUnescapedMarkdown(site, sharePostId));
         })
         .then(null, () => {
           // The post Markdown isn't in the postCache after getting data from the SE API. Get it from edit-inline.
@@ -393,7 +413,7 @@
             const linkURL = sourceButton.attr("href");
             $.get(linkURL, function(result) {
               const sourcePage = new DOMParser().parseFromString(result, "text/html");
-              const text = sourcePage.body.textContent.trim();
+              const text = sourcePage.body.textContent.trim().replaceAll('\r\n', '\n');
               requestOpenAIDetectionDataForButton(button, text);
             });
           });
