@@ -193,10 +193,40 @@
       return null;
     }
 
-    function getSeApiSiteParamAndPostIDFromUrl(url) {
+    function getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(url, getRevision=false) {
+      /*
+       *  URLs containing post IDs:
+       *    https://stackoverflow.com/questions/1/where-oh-where-did-the-joel-data-go
+       *      1 is probably a question, but could be an answer
+       *    https://stackoverflow.com/q/1/3773011
+       *      1 is probably a question, but could be an answer
+       *    https://stackoverflow.com/a/3/3773011
+       *      3 is probably an answer, but could be a question
+       *    https://stackoverflow.com/questions/1/where-oh-where-did-the-joel-data-go/3#3
+       *      Want 3, as it's the most specific. Likely an answer, but could be a question.
+       *    https://stackoverflow.com/posts/70051410/edit/0af09605-ecb7-455c-9624-7139983ee35a
+       *      Could be either a question or answer
+       *    https://stackoverflow.com/posts/70051410/redact/0af09605-ecb7-455c-9624-7139983ee35a
+       *      Could be either a question or answer
+       *    https://stackoverflow.com/posts/1/timeline?filter=WithVoteSummaries
+       *      Could be either a question or answer
+       *    https://stackoverflow.com/posts/1/edit
+       *      Could be either a question or answer
+       *    and several others
+       *
+       *  URLs containing revision IDs:
+       *    https://stackoverflow.com/revisions/0af09605-ecb7-455c-9624-7139983ee35a/view-source
+       *    https://stackoverflow.com/posts/70051410/edit/0af09605-ecb7-455c-9624-7139983ee35a
+       *    https://stackoverflow.com/posts/70051410/redact/0af09605-ecb7-455c-9624-7139983ee35a
+       */
       const urlObj = new URL(url, window.location.href);
-      const [ _, postType, postQuestionOrAnswerId] = urlObj.pathname.split('/');
-      if (/^\d+$/.test(postQuestionOrAnswerId)) {
+      const [ _, postType, postQuestionAnswerOrRevisionId, linkTypeOrTitle, altRevisionId] = urlObj.pathname.split('/');
+      let returnId = null;
+      if ((getRevision && /^(?:[\da-z]+-){4}[\da-z]+$/.test(postQuestionAnswerOrRevisionId) && linkTypeOrTitle === 'view-source')) {
+        returnId = postQuestionAnswerOrRevisionId;
+      } else if ((getRevision && /^(?:[\da-z]+-){4}[\da-z]+$/.test(altRevisionId) && (linkTypeOrTitle === 'edit' || linkTypeOrTitle === 'redact'))) {
+        returnId = altRevisionId;
+      } else if (!getRevision && /^\d+$/.test(postQuestionAnswerOrRevisionId)) {
         let postId = null;
         if (['posts', 'q', 'questions', 'a'].includes(postType)) {
           const answerId = (urlObj.hash.match(/^#(\d+)$/) || [null, null])[1];
@@ -204,22 +234,25 @@
             // Using a hash to indicate the answer at the end of either a /posts/<id>/<something> URL or an /a/ URL isn't valid.
             postId = answerId;
           } else {
-            postId = postQuestionOrAnswerId;
+            postId = postQuestionAnswerOrRevisionId;
           }
-          const seApiSiteParam = getSeApiSiteParamFromDomain(urlObj.hostname);
-          if (seApiSiteParam) {
-            return [seApiSiteParam, postId];
-          } // else
+        } // else
+        returnId = postId;
+      } // else
+      if (returnId) {
+        const seApiSiteParam = getSeApiSiteParamFromDomain(urlObj.hostname);
+        if (seApiSiteParam) {
+          return [seApiSiteParam, returnId];
         } // else
       } // else
       return [null, null];
     }
 
-    function getAllLinkedPostIdsWithSameSeApiParam(urlSeApiParam) {
+    function getAllLinkedPostOrRevisionIdsWithSameSeApiParam(urlSeApiParam, getRevision=false) {
       if (urlSeApiParam) {
         return [...new Set($('a[href]')
           .toArray()
-          .map((el) => getSeApiSiteParamAndPostIDFromUrl(el.href))
+          .map((el) => getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(el.href, getRevision))
           .map(([seApiParam, postId]) => urlSeApiParam === seApiParam ? postId.toString() : null)
           .filter((value) => value !== null))]
       } // else
@@ -274,7 +307,7 @@
     }
 
     function addPostsForSiteFromSeAPIToCache(site, id) {
-      const allPostIdsOnPageForSite = getAllLinkedPostIdsWithSameSeApiParam(site);
+      const allPostIdsOnPageForSite = getAllLinkedPostOrRevisionIdsWithSameSeApiParam(site);
       verifySiteCacheExists(site);
       const siteCache = cache[site];
       // We don't want to be repeatedly fetching data from the SE API when we've already tried and failed. So, we indicate which ones are being fetched and didn't return data.
@@ -301,41 +334,48 @@
         });
     }
 
+    function getPostMarkdownFromEditInlineResponse(site, postId) {
+      // If we really want to allow cross-origin requests, then we'd need to use userscript AJAX.
+      return $.get(`/posts/${postId}/edit-inline`)
+        .then((result) => {
+          const sourcePage = new DOMParser().parseFromString(result, "text/html");
+          const textarea = sourcePage.querySelector("textarea[name='post-text']");
+          const postMarkdown = textarea.value;
+          cache[site][postId] = {
+            unescapedBodyMarkdown: postMarkdown,
+            post_id: postId,
+          };
+          return postMarkdown;
+        });
+    }
+
     function handlePostMenuButtonClick() {
       const button = $(this);
       StackExchange?.helpers?.addSpinner(button);
       const postMenu = button.closest("div.js-post-menu");
       const shareLink = postMenu.find('.js-share-link').first();
       const shareUrl = shareLink[0].href;
-      const [site, sharePostId] = getSeApiSiteParamAndPostIDFromUrl(shareUrl);
+      const [site, sharePostId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(shareUrl);
       verifySiteCacheExists(site);
-      const postId = postMenu.data("post-id");
       getCachedUnescapedMarkdown(site, sharePostId)
         .then(null, () => {
           // The post Markdown isn't in the cache. Fetch data from the SE API for the page and try the cache again.
           return addPostsForSiteFromSeAPIToCache(site, sharePostId)
             .then(() => getCachedUnescapedMarkdown(site, sharePostId));
         })
+        // The post Markdown isn't in the cache after getting data from the SE API. Get it from edit-inline.
+        .then(null, () => getPostMarkdownFromEditInlineResponse(site, sharePostId))
         .then(null, () => {
-          // The post Markdown isn't in the cache after getting data from the SE API. Get it from edit-inline.
-          return $.get(`/posts/${sharePostId}/edit-inline`)
-            .then(function(result) {
-              const sourcePage = new DOMParser().parseFromString(result, "text/html");
-              const textarea = sourcePage.querySelector("textarea[name='post-text']");
-              const postMarkdown = textarea.value;
-              cache[site][sharePostId] = {
-                body_markdown: postMarkdown,
-                post_id: sharePostId,
-              };
-              return postMarkdown;
-            }, function() {
-              // Getting the Markdown failed. Use the HTML in the page.
-              const post = button.parents(".answercell, .postcell");
-              return jQuery.Deferred().resolve(extractPostText(post));
-            });
+          // Getting the Markdown failed (e.g. post is currently deleted and has a suggested edit, which is transitory, but possible). Use the HTML in the page.
+          const post = button.parents(".answercell, .postcell");
+          return jQuery.Deferred().resolve(extractPostText(post));
         })
-        .then(function(textToTest) {
-          requestOpenAIDetectionDataForButton(button, textToTest);
+        .then((textToTest) => requestOpenAIDetectionDataForButton(button, textToTest))
+        .then(null, (error) => {
+          const errorText = `Failed to get the post Markdown and HTML for post ID ${sharePostId} on site ${site} or some other unexpected error occured. The console may have more information.`;
+          console.error(errorText);
+          console.error(error);
+          alert(errorText);
         });
     }
 
@@ -384,6 +424,39 @@
       setTimeout(addButtonToAllMSMarkdownTabs, 25);
     }
 
+    function getPostMarkdownFromRevisonSourcePage(url) {
+      return $.get(url)
+        .then(function(result) {
+          const sourcePage = new DOMParser().parseFromString(result, "text/html");
+          const postMarkdown = sourcePage.body.textContent.trim().replaceAll('\r\n', '\n');
+          const [site, revisionId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(url, true);
+          verifySiteCacheExists(site);
+          cache[site][revisionId] = {
+            unescapedBodyMarkdown: postMarkdown,
+            revisionId,
+          };
+          return postMarkdown;
+        });
+    }
+
+    function handleRevisionButtonClick() {
+      const button = $(this);
+      StackExchange?.helpers?.addSpinner(button);
+      const sourceUrl = button.data('sourceUrl');
+      const [site, revisionId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(sourceUrl, true);
+      verifySiteCacheExists(site);
+      getCachedUnescapedMarkdown(site, revisionId)
+        // The SE API doesn't have a method to get the Markdown for revisions. Only the HTML is available.
+        .then(null, () => getPostMarkdownFromRevisonSourcePage(sourceUrl))
+        .then((text) => requestOpenAIDetectionDataForButton(button, text))
+        .then(null, (error) => {
+          const errorText = `Failed to get the source for revision ${revisionId} on site ${site} or some other unexpected error occured. The console may have more information.`;
+          console.error(errorText);
+          console.error(error);
+          alert(errorText);
+        });
+    }
+
     if (isMS) {
       addButtonToAllMSMarkdownTabs();
       $(document)
@@ -401,21 +474,14 @@
         // Revisions - only attach button to revisions that have a "Source" button. Do not attach to tag only edits.
         $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
           const sourceButton = $(this);
-
           // Add button
           const button = $('<button type="button" class="flex--item s-btn s-btn__link" title="detect OpenAI">Detect OpenAI</button>');
+          const sourceUrl = sourceButton[0].href;
           const menu = sourceButton.parent();
           menu.append(button);
-
-          button.on('click', function() {
-            StackExchange?.helpers?.addSpinner(button);
-            const linkURL = sourceButton.attr("href");
-            $.get(linkURL, function(result) {
-              const sourcePage = new DOMParser().parseFromString(result, "text/html");
-              const text = sourcePage.body.textContent.trim().replaceAll('\r\n', '\n');
-              requestOpenAIDetectionDataForButton(button, text);
-            });
-          });
+          button
+            .data('sourceUrl', sourceUrl)
+            .on('click', handleRevisionButtonClick);
         });
       }
     }
