@@ -126,9 +126,6 @@
 
     function requestOpenAIDetectionDataForButton(button, text) {
       button.blur();
-      if (!isMS) {
-        StackExchange.helpers.addSpinner(button);
-      }
       button[0].dispatchEvent(new CustomEvent('OAID-request-detection-data', {
         bubbles: true,
         cancelable: true,
@@ -306,6 +303,7 @@
 
     function handlePostMenuButtonClick() {
       const button = $(this);
+      StackExchange?.helpers?.addSpinner(button);
       const postMenu = button.closest("div.js-post-menu");
       const shareLink = postMenu.find('.js-share-link').first();
       const shareUrl = shareLink[0].href;
@@ -410,6 +408,7 @@
           menu.append(button);
 
           button.on('click', function() {
+            StackExchange?.helpers?.addSpinner(button);
             const linkURL = sourceButton.attr("href");
             $.get(linkURL, function(result) {
               const sourcePage = new DOMParser().parseFromString(result, "text/html");
