@@ -54,7 +54,7 @@
   */
 
   function inPage() {
-    const postsCache = {};
+    const cache = {};
     const SE_API_CONSTANTS = {
       key: 'b4pJgQpVylPHom5vj811QQ((',
       posts: {
@@ -249,26 +249,26 @@
       return jQuery.Deferred().reject('No posts to fetch from SE API');
     }
 
-    function verifySitePostCacheExists(site) {
-      if (typeof postsCache[site] !== 'object') {
-        postsCache[site] = {};
+    function verifySiteCacheExists(site) {
+      if (typeof cache[site] !== 'object') {
+        cache[site] = {};
       }
     }
 
-    function addPostsToPostsCache(site, items) {
-      verifySitePostCacheExists(site);
-      const siteObj = postsCache[site];
+    function addPostsToCache(site, items) {
+      verifySiteCacheExists(site);
+      const siteObj = cache[site];
       items.forEach((item) => {
         siteObj[item.post_id.toString()] = item;
       });
     }
 
     function getCachedUnescapedMarkdown(site, id) {
-      let unescapedMarkdown = postsCache[site]?.[id.toString()]?.unescapedBodyMarkdown;
-      const markdown = postsCache[site]?.[id.toString()]?.body_markdown;
+      let unescapedMarkdown = cache[site]?.[id.toString()]?.unescapedBodyMarkdown;
+      const markdown = cache[site]?.[id.toString()]?.body_markdown;
       if (!unescapedMarkdown && markdown) {
         unescapedMarkdown = unescapeHTMLText(markdown);
-        postsCache[site][id.toString()].unescapedBodyMarkdown = unescapedMarkdown;
+        cache[site][id.toString()].unescapedBodyMarkdown = unescapedMarkdown;
       }
       if (unescapedMarkdown) {
         return jQuery.Deferred().resolve(unescapedMarkdown);
@@ -278,27 +278,27 @@
 
     function addPostsForSiteFromSeAPIToCache(site, id) {
       const allPostIdsOnPageForSite = getAllLinkedPostIdsWithSameSeApiParam(site);
-      verifySitePostCacheExists(site);
-      const postSiteCache = postsCache[site];
+      verifySiteCacheExists(site);
+      const siteCache = cache[site];
       // We don't want to be repeatedly fetching data from the SE API when we've already tried and failed. So, we indicate which ones are being fetched and didn't return data.
-      const idsNotInCache = allPostIdsOnPageForSite.filter((id) => !postSiteCache[id]);
+      const idsNotInCache = allPostIdsOnPageForSite.filter((id) => !siteCache[id]);
       const idChunk = chunkArrayAndGetChunkForId(id, idsNotInCache, SE_API_CONSTANTS.posts.pagesize);
       idChunk.forEach((chunkId) => {
-        postSiteCache[chunkId] = {fetching: true};
+        siteCache[chunkId] = {fetching: true};
       });
       return getPostsFromSeApi(site, idChunk)
         .then((seAPIResponse) => {
-          addPostsToPostsCache(site, seAPIResponse.items);
+          addPostsToCache(site, seAPIResponse.items);
           idChunk.forEach((chunkId) => {
-            if (postSiteCache[chunkId].fetching === true) {
-              postSiteCache[chunkId] = {noResponse: true};
+            if (siteCache[chunkId].fetching === true) {
+              siteCache[chunkId] = {noResponse: true};
             }
           });
         }, () => {
           // There was an error from the SE API. We want to be able to try to fetch data for these posts again.
           idChunk.forEach((chunkId) => {
-            if (postSiteCache[chunkId].fetching === true || postSiteCache[chunkId].noResponse === true) {
-              delete postSiteCache[chunkId];
+            if (siteCache[chunkId].fetching === true || siteCache[chunkId].noResponse === true) {
+              delete siteCache[chunkId];
             }
           });
         });
@@ -310,22 +310,22 @@
       const shareLink = postMenu.find('.js-share-link').first();
       const shareUrl = shareLink[0].href;
       const [site, sharePostId] = getSeApiSiteParamAndPostIDFromUrl(shareUrl);
-      verifySitePostCacheExists(site);
+      verifySiteCacheExists(site);
       const postId = postMenu.data("post-id");
       getCachedUnescapedMarkdown(site, sharePostId)
         .then(null, () => {
-          // The post Markdown isn't in the postCache. Fetch data from the SE API for the page and try the cache again.
+          // The post Markdown isn't in the cache. Fetch data from the SE API for the page and try the cache again.
           return addPostsForSiteFromSeAPIToCache(site, sharePostId)
             .then(() => getCachedUnescapedMarkdown(site, sharePostId));
         })
         .then(null, () => {
-          // The post Markdown isn't in the postCache after getting data from the SE API. Get it from edit-inline.
+          // The post Markdown isn't in the cache after getting data from the SE API. Get it from edit-inline.
           return $.get(`/posts/${sharePostId}/edit-inline`)
             .then(function(result) {
               const sourcePage = new DOMParser().parseFromString(result, "text/html");
               const textarea = sourcePage.querySelector("textarea[name='post-text']");
               const postMarkdown = textarea.value;
-              postsCache[site][sharePostId] = {
+              cache[site][sharePostId] = {
                 body_markdown: postMarkdown,
                 post_id: sharePostId,
               };
