@@ -447,26 +447,38 @@
         });
     }
 
-    function handleRevisionButtonClick(event) {
-      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
-        return;
-      }
-      event.preventDefault();
-      const button = $(this);
-      StackExchange?.helpers?.addSpinner(button);
-      const sourceUrl = button.data('sourceUrl');
-      const [site, revisionId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(sourceUrl, true);
-      verifySiteCacheExists(site);
-      getCachedUnescapedMarkdown(site, revisionId)
+    function getTextToTestForRevision(button, site, revisionId, sourceUrl, thenBeforeCatch) {
+      return getCachedUnescapedMarkdown(site, revisionId)
         // The SE API doesn't have a method to get the Markdown for revisions. Only the HTML is available.
         .then(null, () => getPostMarkdownFromRevisonSourcePage(sourceUrl))
-        .then((text) => requestOpenAIDetectionDataForButton(button, text))
+        .then((text) => {
+          if (typeof thenBeforeCatch === 'function') {
+            return thenBeforeCatch(text);
+          } // else
+          if (thenBeforeCatch instanceof Promise) {
+            return thenBeforeCatch;
+          } // else
+          return text;
+        })
         .then(null, (error) => {
           const errorText = `Failed to get the source for revision ${revisionId} on site ${site} or some other unexpected error occured. The console may have more information.`;
           console.error(errorText);
           console.error(error);
           alert(errorText);
         });
+    }
+
+    function handleRevisionButtonClick(event) {
+      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+      event.preventDefault();
+      const button = $(this);
+      const sourceUrl = button.data('sourceUrl');
+      const [site, revisionId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(sourceUrl, true);
+      verifySiteCacheExists(site);
+      StackExchange?.helpers?.addSpinner(button);
+      getTextToTestForRevision(button, site, revisionId, sourceUrl, requestOpenAIDetectionDataForButton.bind(null, button));
     }
 
     if (isMS) {
