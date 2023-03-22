@@ -60,7 +60,7 @@
     const SE_API_CONSTANTS = {
       key: 'b4pJgQpVylPHom5vj811QQ((',
       posts: {
-        filter: '!3yXujnEzOWHFVt)rv',
+        filter: '38FD8bVlOlsmcYi8', // This is an "unsafe" filter.
         state: 'PublishedAndStagingGround', // Currently only valid on /posts and /questions
         pagesize: 100,
       },
