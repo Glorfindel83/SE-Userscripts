@@ -613,7 +613,17 @@
 
     function setTextAndTriggerPrediction(text) {
       const textbox = document.getElementById('textbox');
-      textbox.value = text;
+      textbox.select();
+      try {
+        // This will put the replacement in the textbox's "undo" stack.
+        document.execCommand("insertText", false, text);
+      } catch (error) {
+        textbox.value = text;
+      }
+      if (textbox.value !== text) {
+        console.error('In inOpenAIDetectorPage: textbox.value !== text: textbox.value:', {'textbox.value': textbox.value}, '\n:: text:', {text});
+        textbox.value = text;
+      }
       textbox.dispatchEvent(new InputEvent('input'));
     }
 
