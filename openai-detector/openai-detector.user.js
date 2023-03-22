@@ -46,14 +46,14 @@
    * context.  The GM.xmlHttpRequest() function is only available in that context, not in
    * the page context.  Most of this script relies on jQuery and access to the StackExchange
    * Object.  Both of those are in the page context.  So, most of the script, everything in
-   * the inPage() function, is placed in the page context.  For the page context to get the
+   * the inSEorMSPage() function, is placed in the page context.  For the page context to get the
    * detection data, an event, "SEOAID-request-detection-data", is dispatched with the text to
    * pass to the OpenAI detector on the button which has been clicked.  Once the data is
    * received, the "SEOAID-receive-detection-data" event is dispatched with the data received
    * from the OpenAI Detector.
   */
 
-  function inPage() {
+  function inSEorMSPage() {
     const cache = {};
     const SE_API_CONSTANTS = {
       key: 'b4pJgQpVylPHom5vj811QQ((',
@@ -498,7 +498,7 @@
       }
     }
   }
-  makyenUtilities.executeInPage(inPage, true, 'OpenAI-detector-page-script');
+  makyenUtilities.executeInPage(inSEorMSPage, true, 'OpenAI-detector-page-script');
 
   function receiveRequestForDataFromPage(event) {
     const text = JSON.parse(event.detail);
