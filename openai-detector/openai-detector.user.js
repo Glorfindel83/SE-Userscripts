@@ -17,6 +17,7 @@
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
 // @match       *://metasmoke.erwaysoftware.com/*
+// @match       *://openai-openai-detector.hf.space/
 // @exclude     *://stackexchange.com/*
 // @exclude     *://api.*
 // @exclude     *://blog.*
@@ -32,7 +33,8 @@
 // @exclude     *://*.stackapps.com/questions/ask
 // @exclude     *://*.mathoverflow.net/questions/ask
 // @connect     openai-openai-detector.hf.space
-// @require     https://cdn.jsdelivr.net/gh/makyen/extension-and-userscript-utilities@94cbac04cb446d35dd025974a7575b25b9e134ca/executeInPage.js
+// @require     https://cdn.jsdelivr.net/gh/makyen/extension-and-userscript-utilities@3b1b0aeae424bfca448d72d60a3dc998d5c53406/executeInPage.js
+// @require     https://cdn.jsdelivr.net/gh/makyen/extension-and-userscript-utilities@703bcfed979737808567e8b91240f984392f85a0/loadXHook.js
 // @grant       GM_xmlhttpRequest
 // @grant       GM.xmlHttpRequest
 // ==/UserScript==
@@ -349,6 +351,35 @@
         });
     }
 
+    function addSeoaidIframe(button, method, where, iframeAncestor, getText) {
+      where[method]('<iframe class="SEOAID-oaid-iframe post-layout--right" src="https://openai-openai-detector.hf.space/"></iframe>');
+      button.addClass('SEOAID-iframe-open SEOAID-iframe-created');
+      const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
+      iframe.css({
+        width: 'calc(100% - 20px)',
+        height: '710px',
+        border: '2px solid #333',
+        margin: '10px',
+      });
+      const iframeEl = iframe[0];
+      window.addEventListener('message', (event) => {
+        const iframeWindow = iframeEl.contentWindow;
+        if (event.source === iframeWindow && event.origin === 'https://openai-openai-detector.hf.space') {
+          // It's from this iframe.
+          const data = event.data;
+          if (typeof data === 'object' && data.messageType === 'SEOAID-iframe-ready') {
+            getText()
+              .then((textToTest) => {
+                iframeWindow.postMessage({
+                  messageType: 'SEOAID-fill-text',
+                  textToTest,
+                }, 'https://openai-openai-detector.hf.space');
+              });
+          }
+        }
+      });
+    }
+
     function getTextToTestForPost(button, site, sharePostId, thenBeforeCatch) {
       return getCachedUnescapedMarkdown(site, sharePostId)
         .then(null, () => {
@@ -391,6 +422,10 @@
       const shareUrl = shareLink[0].href;
       const [site, sharePostId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(shareUrl);
       verifySiteCacheExists(site);
+      if (addIframeIfButtonClicked(button, 'after', button.closest('.postcell, .answercell'), button.closest('.answer, .question'), getTextToTestForPost.bind(null, button, site, sharePostId))) {
+        return;
+      }
+      button.addClass('SEOAID-button-has-been-clicked');
       StackExchange?.helpers?.addSpinner(button);
       getTextToTestForPost(button, site, sharePostId, (textToTest) => requestOpenAIDetectionDataForButton(button, textToTest));
     }
@@ -412,6 +447,22 @@
         .addClass("SEOAID-post-menu-button-added");
     }
 
+    function addIframeIfButtonClicked(button, insertType, insertRelativeEl, iframeAncestor, getText) {
+      if (button.hasClass('SEOAID-button-has-been-clicked')) {
+        if (button.hasClass('SEOAID-iframe-created')) {
+          const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
+          iframe.toggle(!button.hasClass('SEOAID-iframe-open'));
+          button
+            .toggleClass('SEOAID-iframe-open')
+            .attr('title', `${button.hasClass('SEOAID-iframe-open') ? 'Hide' : 'Show'} the Hugging Face GPT-2 Output Detector iframe.`);
+        } else {
+          addSeoaidIframe(button, insertType, insertRelativeEl, iframeAncestor, getText);
+        }
+        return true;
+      }
+      return false;
+    }
+
     function handleMSMarkdownButtonClick() {
       if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
         return;
@@ -420,6 +471,10 @@
       const button = $(this);
       const tabContent = button.closest("div.post-body-panel-markdown");
       const postMarkdown = tabContent.children(".post-body-pre-block").text();
+      if (addIframeIfButtonClicked(button, 'after', button.closest('.SEOAID-Markdown-button-cntainer'), button.closest('.post-body-panel-markdown.SEOAID-markdown-button-added'), () => Promise.resolve(postMarkdown))) {
+        return;
+      }
+      button.addClass('SEOAID-button-has-been-clicked');
       requestOpenAIDetectionDataForButton(button, postMarkdown);
     }
 
@@ -489,6 +544,11 @@
       const sourceUrl = button.data('sourceUrl');
       const [site, revisionId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(sourceUrl, true);
       verifySiteCacheExists(site);
+      const revisionContainer = button.closest('.js-revision');
+      if (addIframeIfButtonClicked(button, 'append', revisionContainer, revisionContainer, () => getTextToTestForRevision(button, site, revisionId, sourceUrl))) {
+        return;
+      }
+      button.addClass('SEOAID-button-has-been-clicked');
       StackExchange?.helpers?.addSpinner(button);
       getTextToTestForRevision(button, site, revisionId, sourceUrl, requestOpenAIDetectionDataForButton.bind(null, button));
     }
@@ -522,6 +582,248 @@
       }
     }
   }
+
+  function inPageAdjustHuggingFaceAPICall(request) {
+    const adjustedUrl = request.url.replace(/^([^?]+)\?(.+)$/s, (match, p1, p2) => `${p1}?${encodeURIComponent(p2)}`);
+    // The HF API returns an error when the URL is longer than 16,411 characters.
+    // So, we truncate at 16,400.
+    let maxCharacters = 16400;
+    if (adjustedUrl[maxCharacters - 1] === '%') {
+      maxCharacters--;
+    }
+    if (adjustedUrl[maxCharacters - 2] === '%') {
+      maxCharacters -= 2;
+    }
+    if (maxCharacters < adjustedUrl.length) {
+      document.body.classList.add('SEOAID-request-truncated');
+    } else {
+      document.body.classList.remove('SEOAID-request-truncated');
+    }
+    request.url = adjustedUrl.slice(0, maxCharacters);
+  }
+
+  function inOpenAIDetectorPage() {
+    function createButton(text, className, onClick) {
+      const button = document.createElement('button');
+      button.textContent = text;
+      button.className = className + ' SEOAID-header-button';
+      button.addEventListener('click', onClick);
+      return button;
+    }
+
+    function setTextAndTriggerPrediction(text) {
+      const textbox = document.getElementById('textbox');
+      textbox.value = text;
+      textbox.dispatchEvent(new InputEvent('input'));
+    }
+
+    /* The following regexes were taken from SOCVR's Magic Editor:
+         https://github.com/SO-Close-Vote-Reviewers/UserScripts#magic-editor
+         https://github.com/SO-Close-Vote-Reviewers/UserScripts/blob/master/Magic%E2%84%A2Editor.user.js
+       It's authored by multiple people.  It's mostly under an MIT license, but your
+         should check the specifics in the repository and commits.
+         They may have been modified.
+     */
+    const codeBlockRegexes = {
+      //code surrounded by backticks
+      //        https://regex101.com/r/EUJNAD/1
+      "codeFences": /^(?=```)(?:(?:^(`{3,})[^]+?\1)|(`+)(?:\\`|[^`](?!\n\n))+\2)/gm, // modified
+      //code blocks and multiline inline code.
+      //        https://regex101.com/r/eC7mF7/4
+      "block":  /(?:(?:^[ \t]*(?:[\r\n]|\r\n))?`[^`]+`|(?:^[ \t]*(?:[\r\n]|\r\n))^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ \t]+\n)*)+)+)/gm,
+      //code blocks at the start of the post.
+      //        https://regex101.com/r/vu7fBd/1
+      "blockStart":  /(?:^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ ]+\n)*)+)+)/g,
+      //<pre></pre> blocks
+      //        https://regex101.com/r/KFvgol/1
+      "preBlock": /<pre(?: [^>]*?|)>[\W\w]*?<\/pre>/gi,
+      //<code></code> blocks
+      //        https://regex101.com/r/waCxWR/1
+      "codeTag":  /<code(?: [^>]*?|)>[\W\w]*?<\/code>/gi,
+    };
+    const linkRegexes = {
+      //link-sections
+      //  Testing of this and the "links" RegExp were done within the same regex101.com "regex".
+      //  The prior version of this was https://regex101.com/r/tZ4eY3/7 it was saved and became version 21.
+      //  It was then forked into it's own regex:
+      //        https://regex101.com/r/C7nXfd/2
+      "lsec":   /(?:^ *(?:[\r\n]|\r\n))?(?: {2}(?:\[\d\]): \w*:+\/\/.*\n*)+/gm,
+      //links and pathnames
+      //  See comment above the "lsec" RegExp regarding testing sharing the same "regex" on regex101.com
+      //        https://regex101.com/r/tZ4eY3/22
+      "links":  /!?\[[^\]\n]+\](?:\([^\)\n]+\)|\[[^\]\n]+\])(?:\](?:\([^\)\n]+\)|\[[^\]\n]+\]))?|(?:\/\w+\/|.:\\|\w*:\/\/|\.+\/[./\w\d]+|(?:\w+\.\w+){2,})[./\w\d:/?#\[\]@!$&'()*+,;=\-~%]*/gi, // ' fix syntax highlighting in code editor
+      "htmlAnchors":  /<a [^>]*>((?:[^<]|<(?!\/a>))*)<\/a>/gi,
+    };
+
+    function regexRemovalsWithProtection(text, keepRegexes, removeRegexes) {
+      function normalizeSomeTypesToArray(value) {
+        if (!Array.isArray(value)) {
+          if (value instanceof RegExp) {
+            value = [value];
+          } else if (value !== null && typeof value === 'object' ) {
+            value = Object.values(value);
+          } else {
+            value = [];
+          }
+        }
+        return value;
+      }
+      keepRegexes = normalizeSomeTypesToArray(keepRegexes);
+      removeRegexes = normalizeSomeTypesToArray(removeRegexes);
+      text = text.replace(/Q/g, 'QA'); // Free up placeholders
+      let currentCodePoint = 'A'.codePointAt(0) + 1;
+      const substitutions = [];
+      Object.values(keepRegexes).forEach((reg) => {
+        reg.lastIndex = 0;
+        text = text.replace(reg, (match) => {
+          const placeholder = `Q${String.fromCodePoint(currentCodePoint++)}`;
+          substitutions.push([placeholder, match]);
+          return placeholder;
+        });
+      });
+      Object.values(removeRegexes).forEach((reg) => {
+        reg.lastIndex = 0;
+        text = text.replace(reg, '');
+      });
+      substitutions.reverse();
+      substitutions.forEach(([placeholder, replacement]) => {
+        text = text.replaceAll(placeholder, replacement);
+      });
+      text = text.replaceAll('QA', 'Q'); // Close the placeholders
+      return text;
+    }
+
+    makyenUtilities.xhook.load();
+    makyenUtilities.xhook.before(inPageAdjustHuggingFaceAPICall);
+    makyenUtilities.xhook.enable();
+    let receivedText = '';
+    const header = document.querySelector('h1');
+    header.insertAdjacentHTML('afterend', '<div class="SEOAID-header-container"><div class="SEOAID-header-button-container"></div></div>');
+    const headerContainer = document.querySelector('.SEOAID-header-container');
+    const headerButtonContainer = document.querySelector('.SEOAID-header-button-container');
+    headerContainer.prepend(header);
+    headerButtonContainer.append(createButton('Restore text', 'SEOAID-restore-text-button', () => setTextAndTriggerPrediction(receivedText)));
+    headerButtonContainer.insertAdjacentHTML('beforeend', '<span class="SEOAID-strip-buttons-wrap"><span class="SEOAID-strip-buttons-text"></span><span class="SEOAID-strip-buttons-container"></span></span>');
+    const stripButtonsWrap = headerButtonContainer.querySelector('.SEOAID-strip-buttons-wrap');
+    const stripButtonsText = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-text');
+    stripButtonsText.append('Strip: ');
+    const stripButtonsContainer = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-container');
+    stripButtonsContainer.append(createButton('links and link text', 'SEOAID-strip-links-and-link-text-button', () => {
+      const textbox = document.getElementById('textbox');
+      const initialText = textbox.value;
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes).trim());
+    }));
+    stripButtonsContainer.append(createButton('code blocks', 'SEOAID-strip-code blocks-button', () => {
+      const textbox = document.getElementById('textbox');
+      const initialText = textbox.value;
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, null, codeBlockRegexes).trim());
+    }));
+
+    document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-styles">
+/* Styles when not in iframe*/
+body {
+  padding: 0px 3vw;
+}
+#container {
+  width: unset;
+  max-width: 960px;
+}
+h1 {
+  margin-bottom: .25em;
+}
+.SEOAID-header-container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.SEOAID-restore-text-button {
+  display: none;
+}
+.SEOAID-have-received-text .SEOAID-restore-text-button {
+  display: unset;
+}
+.SEOAID-header-button:not(:first-of-type) {
+  /*margin-left: 5px;*/
+}
+.SEOAID-header-button-container {
+  display: flex;
+  gap: 5px;
+  height: min-content;
+  flex-wrap: wrap;
+  padding: 15px 0px 0px 0px;
+  align-self: center;
+}
+.SEOAID-strip-buttons-wrap {
+  margin-left: 10px;
+}
+.SEOAID-strip-buttons-container .SEOAID-header-button:not(:first-child) {
+  margin-left: 5px;
+}
+.SEOAID-request-truncated #message::after {
+	content: " (request text truncated)";
+	color: red;
+}
+</style>`);
+    if (window !== window.top) {
+      // in iframe
+      document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-iframe-styles">
+body {
+  width: 100%;
+  padding: unset;
+}
+#container {
+  width: 100%;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+h1 {
+  margin-top: 0;
+  font-size: 1.5em;
+  margin: 0 auto .5em auto;
+}
+#textbox {
+  width: 100%;
+  padding: 5px 10px;
+  font-size: 15px;
+  line-height: 19.5px;
+}
+#container > p {
+  order: 10;
+  margin-top: 2em;
+}
+.SEOAID-header-button-container {
+  margin: 0 auto .25em auto;
+  padding: 5px 0px 0px 0px;
+  align-self: unset;
+}
+</style>`);
+      window.addEventListener('message', function(event) {
+        if (event.source === window.top && /^https?:\/\/(?:[^/.]+\.)*(?:stackexchange\.com|stackoverflow\.com|serverfault\.com|superuser\.com|askubuntu\.com|stackapps\.com|mathoverflow\.net|stackoverflowteams\.com|metasmoke.erwaysoftware.com)\/?$/.test(event.origin)) {
+          // It's from SE
+          const data = event.data;
+          if (typeof data === 'object' && data.messageType === 'SEOAID-fill-text') {
+            const textToTest = data.textToTest;
+            if (typeof textToTest === 'string') {
+              receivedText = textToTest;
+              document.body.classList.add('SEOAID-have-received-text');
+              setTextAndTriggerPrediction(textToTest);
+            }
+					}
+        }
+      });
+      window.top.postMessage({
+          messageType: 'SEOAID-iframe-ready',
+      }, '*');
+    }
+  }
+
+  if (window.location.hostname === "openai-openai-detector.hf.space") {
+      inOpenAIDetectorPage();
+      return;
+  }
+
   makyenUtilities.executeInPage(inSEorMSPage, true, 'OpenAI-detector-page-script');
 
   function receiveRequestForDataFromPage(event) {
