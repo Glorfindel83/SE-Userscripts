@@ -516,10 +516,19 @@
     // The GM polyfill doesn't convert GM_xmlhttpRequest to a useful Promise in all userscript managers (i.e. Violentmonkey), so...
     const gmXmlhttpRequest = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : GM.xmlHttpRequest;
     const baseURL = "https://openai-openai-detector.hf.space/openai-detector";
+    const fullURL = `${baseURL}?${encodeURIComponent(text)}`;
+    // Restrict the length of OAI API request URLs to prevent 414 Request URI Too Long errors
+    let maxCharacters = 16400;
+    if (fullURL[maxCharacters - 1] === '%') {
+      maxCharacters--;
+    }
+    if (fullURL[maxCharacters - 2] === '%') {
+      maxCharacters -= 2;
+    }
     return new Promise((resolve, reject) => {
       gmXmlhttpRequest({
         method: "GET",
-        url: `${baseURL}?${encodeURIComponent(text)}`,
+        url: fullURL.slice(0, maxCharacters),
         timeout: 60000, // There's no particular reason for this length, but don't want to hang forever.
         onload: resolve,
         onabort: reject,
