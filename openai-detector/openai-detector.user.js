@@ -47,9 +47,9 @@
    * the page context.  Most of this script relies on jQuery and access to the StackExchange
    * Object.  Both of those are in the page context.  So, most of the script, everything in
    * the inPage() function, is placed in the page context.  For the page context to get the
-   * detection data, an event, "OAID-request-detection-data", is dispatched with the text to
+   * detection data, an event, "SEOAID-request-detection-data", is dispatched with the text to
    * pass to the OpenAI detector on the button which has been clicked.  Once the data is
-   * received, the "OAID-receive-detection-data" event is dispatched with the data received
+   * received, the "SEOAID-receive-detection-data" event is dispatched with the data received
    * from the OpenAI Detector.
   */
 
@@ -122,11 +122,11 @@
       }
       updateButtonTextWithPercent(button, percent);
     }
-    window.addEventListener('OAID-receive-detection-data', receiveOpenAIDetectionDataForButton);
+    window.addEventListener('SEOAID-receive-detection-data', receiveOpenAIDetectionDataForButton);
 
     function requestOpenAIDetectionDataForButton(button, text) {
       button.blur();
-      button[0].dispatchEvent(new CustomEvent('OAID-request-detection-data', {
+      button[0].dispatchEvent(new CustomEvent('SEOAID-request-detection-data', {
         bubbles: true,
         cancelable: true,
         detail: JSON.stringify(text),
@@ -491,14 +491,14 @@
   function receiveRequestForDataFromPage(event) {
     const text = JSON.parse(event.detail);
     detectAI(text).then((jsonData) => {
-      event.target.dispatchEvent(new CustomEvent('OAID-receive-detection-data', {
+      event.target.dispatchEvent(new CustomEvent('SEOAID-receive-detection-data', {
         bubbles: true,
         cancelable: true,
         detail: jsonData,
       }));
     });
   }
-  window.addEventListener('OAID-request-detection-data', receiveRequestForDataFromPage);
+  window.addEventListener('SEOAID-request-detection-data', receiveRequestForDataFromPage);
 
   function detectAI(text) {
     // The GM polyfill doesn't convert GM_xmlhttpRequest to a useful Promise in all userscript managers (i.e. Violentmonkey), so...
