@@ -349,19 +349,8 @@
         });
     }
 
-    function handlePostMenuButtonClick(event) {
-      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
-        return;
-      }
-      event.preventDefault();
-      const button = $(this);
-      StackExchange?.helpers?.addSpinner(button);
-      const postMenu = button.closest("div.js-post-menu");
-      const shareLink = postMenu.find('.js-share-link').first();
-      const shareUrl = shareLink[0].href;
-      const [site, sharePostId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(shareUrl);
-      verifySiteCacheExists(site);
-      getCachedUnescapedMarkdown(site, sharePostId)
+    function getTextToTestForPost(button, site, sharePostId, thenBeforeCatch) {
+      return getCachedUnescapedMarkdown(site, sharePostId)
         .then(null, () => {
           // The post Markdown isn't in the cache. Fetch data from the SE API for the page and try the cache again.
           return addPostsForSiteFromSeAPIToCache(site, sharePostId)
@@ -374,13 +363,36 @@
           const post = button.parents(".answercell, .postcell");
           return jQuery.Deferred().resolve(extractPostText(post));
         })
-        .then((textToTest) => requestOpenAIDetectionDataForButton(button, textToTest))
+        .then((text) => {
+          if (typeof thenBeforeCatch === 'function') {
+            return thenBeforeCatch(text);
+          } // else
+          if (thenBeforeCatch instanceof Promise) {
+            return thenBeforeCatch;
+          } // else
+          return text;
+        })
         .then(null, (error) => {
           const errorText = `Failed to get the post Markdown and HTML for post ID ${sharePostId} on site ${site} or some other unexpected error occured. The console may have more information.`;
           console.error(errorText);
           console.error(error);
           alert(errorText);
         });
+    }
+
+    function handlePostMenuButtonClick(event) {
+      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+      event.preventDefault();
+      const button = $(this);
+      const postMenu = button.closest("div.js-post-menu");
+      const shareLink = postMenu.find('.js-share-link').first();
+      const shareUrl = shareLink[0].href;
+      const [site, sharePostId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(shareUrl);
+      verifySiteCacheExists(site);
+      StackExchange?.helpers?.addSpinner(button);
+      getTextToTestForPost(button, site, sharePostId, (textToTest) => requestOpenAIDetectionDataForButton(button, textToTest));
     }
 
     function addButtonToPostMenu() {
