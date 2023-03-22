@@ -407,7 +407,7 @@
       event.preventDefault();
       const button = $(this);
       const tabContent = button.closest("div.post-body-panel-markdown");
-      const postMarkdown = tabContent.children(".post-body-pre-block").html();
+      const postMarkdown = tabContent.children(".post-body-pre-block").text();
       requestOpenAIDetectionDataForButton(button, postMarkdown);
     }
 
