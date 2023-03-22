@@ -349,7 +349,11 @@
         });
     }
 
-    function handlePostMenuButtonClick() {
+    function handlePostMenuButtonClick(event) {
+      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+      event.preventDefault();
       const button = $(this);
       StackExchange?.helpers?.addSpinner(button);
       const postMenu = button.closest("div.js-post-menu");
@@ -383,7 +387,7 @@
       // Regular posts
       const menu = $(this);
       // Add button
-      const button = $('<button class="s-btn s-btn__link SEOAID-post-menu-button" type="button" href="#">Detect OpenAI</button>');
+      const button = $('<a class="SEOAID-post-menu-button" href="https://openai-openai-detector.hf.space/" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</button>');
       const cell = $('<div class="flex--item SEOAID-post-menu-item"></div>');
       cell.append(button);
       menu.children().first().append(cell);
@@ -397,6 +401,10 @@
     }
 
     function handleMSMarkdownButtonClick() {
+      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+      event.preventDefault();
       const button = $(this);
       const tabContent = button.closest("div.post-body-panel-markdown");
       const postMarkdown = tabContent.children(".post-body-pre-block").html();
@@ -407,7 +415,7 @@
       // Regular posts
       const tabContent = $(this);
       // Add button
-      const button = $('<button class="SEOAID-markdown-button" type="button" href="#">Detect OpenAI</button>');
+      const button = $('<a class="SEOAID-markdown-button" href="https://openai-openai-detector.hf.space/" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</a>');
       const cell = $('<div class="SEOAID-Markdown-button-cntainer"></div>');
       cell.append(button);
       tabContent.append(cell);
@@ -439,7 +447,11 @@
         });
     }
 
-    function handleRevisionButtonClick() {
+    function handleRevisionButtonClick(event) {
+      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+      }
+      event.preventDefault();
       const button = $(this);
       StackExchange?.helpers?.addSpinner(button);
       const sourceUrl = button.data('sourceUrl');
@@ -475,7 +487,7 @@
         $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
           const sourceButton = $(this);
           // Add button
-          const button = $('<button type="button" class="flex--item s-btn s-btn__link" title="detect OpenAI">Detect OpenAI</button>');
+          const button = $('<a class="flex--item" title="Run the revision content through the Hugging Face GPT-2 Output Detector." href="https://openai-openai-detector.hf.space/">Detect OpenAI</a>');
           const sourceUrl = sourceButton[0].href;
           const menu = sourceButton.parent();
           menu.append(button);
