@@ -660,12 +660,12 @@
       "lsec":   /(?:^ *(?:[\r\n]|\r\n))?(?: {2}(?:\[\d\]): \w*:+\/\/.*\n*)+/gm,
       //links and pathnames
       //  See comment above the "lsec" RegExp regarding testing sharing the same "regex" on regex101.com
-      //        https://regex101.com/r/tZ4eY3/22
-      "links":  /!?\[[^\]\n]+\](?:\([^\)\n]+\)|\[[^\]\n]+\])(?:\](?:\([^\)\n]+\)|\[[^\]\n]+\]))?|(?:\/\w+\/|.:\\|\w*:\/\/|\.+\/[./\w\d]+|(?:\w+\.\w+){2,})[./\w\d:/?#\[\]@!$&'()*+,;=\-~%]*/gi, // ' fix syntax highlighting in code editor
+      //        https://regex101.com/r/tZ4eY3/25
+      "links":  /!?\[(?<!\\\[)((?:[^\]\n]|\\\]|\]\((?=[^)]+\)\]))+)\](?:\((?:[^\)\n"]|"(?:[^"]|"(?!\)))*"(?=\)))+\)|\[[^\]\n]+\])(?:\](?:\([^\)\n]+\)|\[[^\]\n]+\]))?|(?:\/\w+\/|.:\\|\w*:\/\/|\.+\/[./\w\d]+|(?:\w+\.\w+){2,})[./\w\d:/?#\[\]@!$&'()*+,;=\-~%]*/gi, // ' fix syntax highlighting in code editor
       "htmlAnchors":  /<a [^>]*>((?:[^<]|<(?!\/a>))*)<\/a>/gi,
     };
 
-    function regexRemovalsWithProtection(text, keepRegexes, removeRegexes) {
+    function regexRemovalsWithProtection(text, keepRegexes, removeRegexes, keepMatchGroup1) {
       function normalizeSomeTypesToArray(value) {
         if (!Array.isArray(value)) {
           if (value instanceof RegExp) {
@@ -693,7 +693,13 @@
       });
       Object.values(removeRegexes).forEach((reg) => {
         reg.lastIndex = 0;
-        text = text.replace(reg, '');
+        if (keepMatchGroup1) {
+          text = text.replace(reg, function(match, p1) {
+            return arguments.length > 3 && p1 ? p1 : '';
+          });
+        } else {
+          text = text.replace(reg, '');
+        }
       });
       substitutions.reverse();
       substitutions.forEach(([placeholder, replacement]) => {
@@ -718,6 +724,11 @@
     const stripButtonsText = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-text');
     stripButtonsText.append('Strip: ');
     const stripButtonsContainer = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-container');
+    stripButtonsContainer.append(createButton('links', 'SEOAID-strip-links-button', () => {
+      const textbox = document.getElementById('textbox');
+      const initialText = textbox.value;
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes, true).trim());
+    }));
     stripButtonsContainer.append(createButton('links and link text', 'SEOAID-strip-links-and-link-text-button', () => {
       const textbox = document.getElementById('textbox');
       const initialText = textbox.value;
@@ -727,6 +738,11 @@
       const textbox = document.getElementById('textbox');
       const initialText = textbox.value;
       setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, null, codeBlockRegexes).trim());
+    }));
+    stripButtonsContainer.append(createButton('HTML comments', 'SEOAID-strip-HTML-comments-button', () => {
+      const textbox = document.getElementById('textbox');
+      const initialText = textbox.value;
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, /<!--.*?-->/g).trim());
     }));
 
     document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-styles">
@@ -766,8 +782,15 @@ h1 {
 .SEOAID-strip-buttons-wrap {
   margin-left: 10px;
 }
-.SEOAID-strip-buttons-container .SEOAID-header-button:not(:first-child) {
-  margin-left: 5px;
+.SEOAID-strip-buttons-wrap {
+  margin-left: 10px;
+  white-space: nowrap;
+  display: flex;
+}
+.SEOAID-strip-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 .SEOAID-request-truncated #message::after {
 	content: " (request text truncated)";
