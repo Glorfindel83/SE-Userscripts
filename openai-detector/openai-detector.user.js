@@ -431,11 +431,15 @@
     }
 
     function handlePostMenuButtonClick(event) {
-      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+      if (event.shiftKey || event.ctrlKey || event.metaKey) {
         return;
       }
-      event.preventDefault();
       const button = $(this);
+      if (event.altKey) {
+        // Go directly to opening iframe
+        button.addClass('SEOAID-button-has-been-clicked');
+      }
+      event.preventDefault();
       const postMenu = button.closest("div.js-post-menu");
       const shareLink = postMenu.find('.js-share-link').first();
       const shareUrl = shareLink[0].href;
@@ -483,11 +487,15 @@
     }
 
     function handleMSMarkdownButtonClick() {
-      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+      if (event.shiftKey || event.ctrlKey || event.metaKey) {
         return;
       }
-      event.preventDefault();
       const button = $(this);
+      if (event.altKey) {
+        // Go directly to opening iframe
+        button.addClass('SEOAID-button-has-been-clicked');
+      }
+      event.preventDefault();
       const tabContent = button.closest("div.post-body-panel-markdown");
       const postMarkdown = tabContent.children(".post-body-pre-block").text();
       if (addIframeIfButtonClicked(button, 'after', button.closest('.SEOAID-Markdown-button-cntainer'), button.closest('.post-body-panel-markdown.SEOAID-markdown-button-added'), () => Promise.resolve(postMarkdown))) {
@@ -555,11 +563,15 @@
     }
 
     function handleRevisionButtonClick(event) {
-      if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+      if (event.shiftKey || event.ctrlKey || event.metaKey) {
         return;
       }
-      event.preventDefault();
       const button = $(this);
+      if (event.altKey) {
+        // Go directly to opening iframe
+        button.addClass('SEOAID-button-has-been-clicked');
+      }
+      event.preventDefault();
       const sourceUrl = button.data('sourceUrl');
       const [site, revisionId] = getSeApiSiteParamAndPostIdOrRevisionIdFromUrl(sourceUrl, true);
       verifySiteCacheExists(site);
