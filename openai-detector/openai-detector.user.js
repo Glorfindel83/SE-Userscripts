@@ -793,8 +793,8 @@ h1 {
   gap: 5px;
 }
 .SEOAID-request-truncated #message::after {
-	content: " (request text truncated)";
-	color: red;
+  content: " (request text truncated)";
+  color: red;
 }
 </style>`);
     if (window !== window.top) {
@@ -843,7 +843,7 @@ h1 {
               document.body.classList.add('SEOAID-have-received-text');
               setTextAndTriggerPrediction(textToTest);
             }
-					}
+          }
         }
       });
       window.top.postMessage({
