@@ -352,7 +352,7 @@
     }
 
     function addSeoaidIframe(button, method, where, iframeAncestor, getText) {
-      where[method]('<iframe class="SEOAID-oaid-iframe post-layout--right" src="https://openai-openai-detector.hf.space/"></iframe>');
+      where[method](`<iframe sandbox="allow-same-origin allow-scripts" class="SEOAID-oaid-iframe post-layout--right" src="https://openai-openai-detector.hf.space/"${notShow ? ' style="display: none;"' : ''}></iframe>`);
       button.addClass('SEOAID-iframe-open SEOAID-iframe-created');
       const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
       iframe.css({
