@@ -351,16 +351,35 @@
         });
     }
 
+    function setLocalStorageFromElementHeight(storageKey, container) {
+        const containerHeight = container.css('height');
+        localStorage[storageKey] = containerHeight;
+    }
+
     function addSeoaidIframe(button, method, where, iframeAncestor, getText) {
-      where[method](`<iframe sandbox="allow-same-origin allow-scripts" class="SEOAID-oaid-iframe post-layout--right" src="https://openai-openai-detector.hf.space/"${notShow ? ' style="display: none;"' : ''}></iframe>`);
+      where[method](`<div class="SEOID-iframe-container post-layout--right"><iframe sandbox="allow-same-origin allow-scripts" class="SEOAID-oaid-iframe" src="https://openai-openai-detector.hf.space/"></iframe></div>`);
       button.addClass('SEOAID-iframe-open SEOAID-iframe-created');
       const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
+      const iframeContainer = iframeAncestor.find('.SEOID-iframe-container');
+      const iframeContainerHeightStorageKey = 'SEOAID-iframeContainer-height';
       iframe.css({
-        width: 'calc(100% - 20px)',
-        height: '710px',
+        width: '100%',
+        height: 'calc(100% - 4px)',
+      });
+      // CSS resize doesn't work on iframes in Firefox
+      iframeContainer.css({
+        resize: 'vertical',
+        'overflow-y': 'auto',
+        height: localStorage[iframeContainerHeightStorageKey] || '770px',
         border: '2px solid #333',
         margin: '10px',
       });
+      let iframeHeightDebounceTimer = null;
+      const resizeObserver = new ResizeObserver(() => {
+        clearTimeout(iframeHeightDebounceTimer);
+        iframeHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeight, 200, iframeContainerHeightStorageKey, iframeContainer);
+      });
+      resizeObserver.observe(iframeContainer[0]);
       const iframeEl = iframe[0];
       window.addEventListener('message', (event) => {
         const iframeWindow = iframeEl.contentWindow;
@@ -450,8 +469,8 @@
     function addIframeIfButtonClicked(button, insertType, insertRelativeEl, iframeAncestor, getText) {
       if (button.hasClass('SEOAID-button-has-been-clicked')) {
         if (button.hasClass('SEOAID-iframe-created')) {
-          const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
-          iframe.toggle(!button.hasClass('SEOAID-iframe-open'));
+          const iframeContainer = iframeAncestor.find('.SEOID-iframe-container');
+          iframeContainer.toggle(!button.hasClass('SEOAID-iframe-open'));
           button
             .toggleClass('SEOAID-iframe-open')
             .attr('title', `${button.hasClass('SEOAID-iframe-open') ? 'Hide' : 'Show'} the Hugging Face GPT-2 Output Detector iframe.`);
@@ -603,6 +622,11 @@
   }
 
   function inOpenAIDetectorPage() {
+    function setLocalStorageFromElementHeight(storageKey, container) {
+        const containerHeight = container.style.height;
+        localStorage[storageKey] = containerHeight;
+    }
+
     function createButton(text, className, onClick) {
       const button = document.createElement('button');
       button.textContent = text;
@@ -832,6 +856,19 @@ h1 {
   align-self: unset;
 }
 </style>`);
+      const textbox = document.getElementById('textbox');
+      const iframeTexboxHeightStorageKey = 'SEOAID-textbox-height';
+      const storageIframeTextboxHeight = localStorage[iframeTexboxHeightStorageKey];
+      if (storageIframeTextboxHeight) {
+        textbox.style.height = storageIframeTextboxHeight;
+      }
+      textbox.style.resize = 'vertical';
+      let textboxHeightDebounceTimer = null;
+      const resizeObserver = new ResizeObserver(() => {
+        clearTimeout(textboxHeightDebounceTimer);
+        textboxHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeight, 200, iframeTexboxHeightStorageKey, textbox);
+      });
+      resizeObserver.observe(textbox)
       window.addEventListener('message', function(event) {
         if (event.source === window.top && /^https?:\/\/(?:[^/.]+\.)*(?:stackexchange\.com|stackoverflow\.com|serverfault\.com|superuser\.com|askubuntu\.com|stackapps\.com|mathoverflow\.net|stackoverflowteams\.com|metasmoke.erwaysoftware.com)\/?$/.test(event.origin)) {
           // It's from SE
