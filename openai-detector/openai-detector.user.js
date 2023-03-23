@@ -647,8 +647,9 @@
       return button;
     }
 
-    function setTextAndTriggerPrediction(text) {
+    function setTextAndTriggerPrediction(text, retainCurrentInsertOffset) {
       const textbox = document.getElementById('textbox');
+      const origSelectionEnd = textbox.selectionEnd || 0;
       textbox.select();
       try {
         // This will put the replacement in the textbox's "undo" stack.
@@ -659,6 +660,10 @@
       if (textbox.value !== text) {
         console.error('In inOpenAIDetectorPage: textbox.value !== text: textbox.value:', {'textbox.value': textbox.value}, '\n:: text:', {text});
         textbox.value = text;
+      }
+      if (retainCurrentInsertOffset) {
+        // This isn't perfect, but it's probably closer to what a user expects.
+        textbox.selectionEnd = origSelectionEnd;
       }
       textbox.dispatchEvent(new InputEvent('input'));
     }
@@ -754,7 +759,7 @@
     const headerContainer = document.querySelector('.SEOAID-header-container');
     const headerButtonContainer = document.querySelector('.SEOAID-header-button-container');
     headerContainer.prepend(header);
-    headerButtonContainer.append(createButton('Restore text', 'SEOAID-restore-text-button', () => setTextAndTriggerPrediction(receivedText)));
+    headerButtonContainer.append(createButton('Restore text', 'SEOAID-restore-text-button', () => setTextAndTriggerPrediction(receivedText, true)));
     headerButtonContainer.insertAdjacentHTML('beforeend', '<span class="SEOAID-strip-buttons-wrap"><span class="SEOAID-strip-buttons-text"></span><span class="SEOAID-strip-buttons-container"></span></span>');
     const stripButtonsWrap = headerButtonContainer.querySelector('.SEOAID-strip-buttons-wrap');
     const stripButtonsText = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-text');
@@ -763,22 +768,22 @@
     stripButtonsContainer.append(createButton('links', 'SEOAID-strip-links-button', () => {
       const textbox = document.getElementById('textbox');
       const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes, true).trim());
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes, true).trim(), true);
     }));
     stripButtonsContainer.append(createButton('links and link text', 'SEOAID-strip-links-and-link-text-button', () => {
       const textbox = document.getElementById('textbox');
       const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes).trim());
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes).trim(), true);
     }));
     stripButtonsContainer.append(createButton('code blocks', 'SEOAID-strip-code blocks-button', () => {
       const textbox = document.getElementById('textbox');
       const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, null, codeBlockRegexes).trim());
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, null, codeBlockRegexes).trim(), true);
     }));
     stripButtonsContainer.append(createButton('HTML comments', 'SEOAID-strip-HTML-comments-button', () => {
       const textbox = document.getElementById('textbox');
       const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, /<!--.*?-->/g).trim());
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, /<!--.*?-->/g).trim(), true);
     }));
 
     document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-styles">
@@ -890,7 +895,7 @@ h1 {
             if (typeof textToTest === 'string') {
               receivedText = textToTest;
               document.body.classList.add('SEOAID-have-received-text');
-              setTextAndTriggerPrediction(textToTest);
+              setTextAndTriggerPrediction(textToTest, true);
             }
           }
         }
