@@ -676,40 +676,50 @@
          https://github.com/SO-Close-Vote-Reviewers/UserScripts/blob/master/Magic%E2%84%A2Editor.user.js
        It's authored by multiple people.  It's mostly under an MIT license, but your
          should check the specifics in the repository and commits.
-         They may have been modified.
+         They have been modified.
      */
     const codeBlockRegexes = {
-      //code surrounded by backticks
-      //        https://regex101.com/r/EUJNAD/1
-      "codeFences": /^(?=```)(?:(?:^(`{3,})[^]+?\1)|(`+)(?:\\`|[^`](?!\n\n))+\2)/gm, // modified
-      //code blocks and multiline inline code.
-      //        https://regex101.com/r/eC7mF7/4
-      "block":  /(?:(?:^[ \t]*(?:[\r\n]|\r\n))?`[^`]+`|(?:^[ \t]*(?:[\r\n]|\r\n))^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ \t]+\n)*)+)+)/gm,
-      //code blocks at the start of the post.
-      //        https://regex101.com/r/vu7fBd/1
-      "blockStart":  /(?:^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ ]+\n)*)+)+)/g,
-      //<pre></pre> blocks
-      //        https://regex101.com/r/KFvgol/1
-      "preBlock": /<pre(?: [^>]*?|)>[\W\w]*?<\/pre>/gi,
-      //<code></code> blocks
-      //        https://regex101.com/r/waCxWR/1
-      "codeTag":  /<code(?: [^>]*?|)>[\W\w]*?<\/code>/gi,
+      // code fences
+      //   Code blocks starting and ending with a code fence. Does not include inline code
+      //        https://regex101.com/r/3Rb4Id/2
+      "codeFences": /^(?=```)(`{3,})[^\r\n]*[\r\n]*(?<codeText>[^]+?)\1/gm,
+      // indented code blocks
+      //        https://regex101.com/r/uTI5VH/2
+      "indentedCodeBlock":  /(?<codeText>(?:(?:^[ \t]*(?:[\r\n]|\r\n))^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ \t]+\n)*)+)+))/gm,
+      // indented code blocks at the start of the post.
+      //        https://regex101.com/r/Dsn0Wy/2
+      "indentedCodeBlockAtStart":  /(?<codeText>(?:^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ ]+\n)*)+)+))/g,
+      // <pre></pre> blocks
+      //        https://regex101.com/r/Gi0ysr/2
+      "preBlock": /<pre(?: [^>]*?|)>(?<innerCodeElement><code(?: [^>]*?|)>(?<codeText>[\W\w]*?)<\/code>)<\/pre>|<pre(?: [^>]*?|)>(?<preText>[\W\w]*?)<\/pre>/gi,
     };
+    const inlineCodeRegexes = {
+      //  These do *not* prevent matching within code blocks, so code blocks must be removed first.
+      // inline code
+      //        https://regex101.com/r/LTf0dA/3
+      "inlineCode": /(?!^```)`(?<!``)(?:(`*)(?<codeText>(?:\\`|[^`](?!\n\n))+)`\1)/gm,
+      // <code></code> blocks
+      //        https://regex101.com/r/7UGbRu/2
+      "codeTag":  /<code(?<!<pre><code)(?: [^>]*?|)>(?<codeText>[\W\w]*?)<\/code>/gi,
+    };
+    const allCodeRegexes = Object.assign({}, codeBlockRegexes, inlineCodeRegexes);
     const linkRegexes = {
-      //link-sections
-      //  Testing of this and the "links" RegExp were done within the same regex101.com "regex".
-      //  The prior version of this was https://regex101.com/r/tZ4eY3/7 it was saved and became version 21.
-      //  It was then forked into it's own regex:
+      // link-sections
+      //   Testing of this and the "links" RegExp were done within the same regex101.com "regex".
+      //   The prior version of this was https://regex101.com/r/tZ4eY3/7 it was saved and became version 21.
+      //   It was then forked into it's own regex:
       //        https://regex101.com/r/C7nXfd/2
       "lsec":   /(?:^ *(?:[\r\n]|\r\n))?(?: {2}(?:\[\d\]): \w*:+\/\/.*\n*)+/gm,
-      //links and pathnames
-      //  See comment above the "lsec" RegExp regarding testing sharing the same "regex" on regex101.com
-      //        https://regex101.com/r/tZ4eY3/25
-      "links":  /!?\[(?<!\\\[)((?:[^\]\n]|\\\]|\]\((?=[^)]+\)\]))+)\](?:\((?:[^\)\n"]|"(?:[^"]|"(?!\)))*"(?=\)))+\)|\[[^\]\n]+\])(?:\](?:\([^\)\n]+\)|\[[^\]\n]+\]))?|(?:\/\w+\/|.:\\|\w*:\/\/|\.+\/[./\w\d]+|(?:\w+\.\w+){2,})[./\w\d:/?#\[\]@!$&'()*+,;=\-~%]*/gi, // ' fix syntax highlighting in code editor
-      "htmlAnchors":  /<a [^>]*>((?:[^<]|<(?!\/a>))*)<\/a>/gi,
+      // links and pathnames
+      //   See comment above the "lsec" RegExp regarding testing sharing the same "regex" on regex101.com
+      //        https://regex101.com/r/tZ4eY3/26
+      "links":  /!?\[(?<!\\\[)(?<linkText>(?:[^\]\n]|\\\]|\]\((?=[^)]+\)\]))+)\](?:\((?:[^\)\n"]|"(?:[^"]|"(?!\)))*"(?=\)))+\)|\[[^\]\n]+\])(?:\](?:\([^\)\n]+\)|\[[^\]\n]+\]))?|(?:\/\w+\/|.:\\|\w*:\/\/|\.+\/[./\w\d]+|(?:\w+\.\w+){2,})[./\w\d:/?#\[\]@!$&'()*+,;=\-~%]*/gi,
+      // HTML anchor elements
+      //        https://regex101.com/r/j8MnYg/1
+      "htmlAnchors":  /<a [^>]*>(?<linkText>(?:[^<]|<(?!\/a>))*)<\/a>/gi,
     };
 
-    function regexRemovalsWithProtection(text, keepRegexes, removeRegexes, keepMatchGroup1) {
+    function regexRemovalsWithProtection(text, keepRegexes, removeRegexes, namedGroupsToKeep) {
       function normalizeSomeTypesToArray(value) {
         if (!Array.isArray(value)) {
           if (value instanceof RegExp) {
@@ -722,6 +732,8 @@
         }
         return value;
       }
+
+      namedGroupsToKeep = typeof namedGroupsToKeep === 'string' ? [namedGroupsToKeep] : namedGroupsToKeep;
       keepRegexes = normalizeSomeTypesToArray(keepRegexes);
       removeRegexes = normalizeSomeTypesToArray(removeRegexes);
       text = text.replace(/Q/g, 'QA'); // Free up placeholders
@@ -737,9 +749,13 @@
       });
       Object.values(removeRegexes).forEach((reg) => {
         reg.lastIndex = 0;
-        if (keepMatchGroup1) {
+        if (Array.isArray(namedGroupsToKeep)) {
           text = text.replace(reg, function(match, p1) {
-            return arguments.length > 3 && p1 ? p1 : '';
+            const matchedGroups = arguments[arguments.length - 1];
+            if (typeof matchedGroups === 'object') {
+              return Object.entries(matchedGroups).reduce((sum, [key, value]) => sum + namedGroupsToKeep.includes(key) ? value : '', '');
+            }
+            return '';
           });
         } else {
           text = text.replace(reg, '');
@@ -751,6 +767,12 @@
       });
       text = text.replaceAll('QA', 'Q'); // Close the placeholders
       return text;
+    }
+
+    function textboxRegexRemovalsWithProtection(keepRegexes, removeRegexes, namedGroupsToKeep) {
+      const textbox = document.getElementById('textbox');
+      const initialText = textbox.value;
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, keepRegexes, removeRegexes, namedGroupsToKeep).trim(), true);
     }
 
     makyenUtilities.xhook.load();
@@ -768,26 +790,10 @@
     const stripButtonsText = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-text');
     stripButtonsText.append('Strip: ');
     const stripButtonsContainer = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-container');
-    stripButtonsContainer.append(createButton('links', 'SEOAID-strip-links-button', () => {
-      const textbox = document.getElementById('textbox');
-      const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes, true).trim(), true);
-    }));
-    stripButtonsContainer.append(createButton('links and link text', 'SEOAID-strip-links-and-link-text-button', () => {
-      const textbox = document.getElementById('textbox');
-      const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, linkRegexes).trim(), true);
-    }));
-    stripButtonsContainer.append(createButton('code blocks', 'SEOAID-strip-code blocks-button', () => {
-      const textbox = document.getElementById('textbox');
-      const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, null, codeBlockRegexes).trim(), true);
-    }));
-    stripButtonsContainer.append(createButton('HTML comments', 'SEOAID-strip-HTML-comments-button', () => {
-      const textbox = document.getElementById('textbox');
-      const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, codeBlockRegexes, /<!--.*?-->/g).trim(), true);
-    }));
+    stripButtonsContainer.append(createButton('links', 'SEOAID-strip-links-button', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes, ['linkText'])));
+    stripButtonsContainer.append(createButton('links and link text', 'SEOAID-strip-links-and-link-text-button', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes)));
+    stripButtonsContainer.append(createButton('code blocks', 'SEOAID-strip-code blocks-button', () => textboxRegexRemovalsWithProtection(null, codeBlockRegexes)));
+    stripButtonsContainer.append(createButton('HTML comments', 'SEOAID-strip-HTML-comments-button', () => textboxRegexRemovalsWithProtection(allCodeRegexes, /<!--.*?-->[\r\n]*/g)));
 
     document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-styles">
 /* Styles when not in iframe*/
