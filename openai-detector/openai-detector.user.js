@@ -363,8 +363,8 @@
       const iframeContainer = iframeAncestor.find('.SEOID-iframe-container');
       const iframeContainerHeightStorageKey = 'SEOAID-iframeContainer-height';
       iframe.css({
-        width: '100%',
-        height: 'calc(100% - 4px)',
+        border: 'unset',
+        'flex-basis': '100%',
       });
       // CSS resize doesn't work on iframes in Firefox
       iframeContainer.css({
@@ -372,7 +372,10 @@
         'overflow-y': 'auto',
         height: localStorage[iframeContainerHeightStorageKey] || '770px',
         border: '2px solid #333',
-        margin: '10px',
+        'margin-top': '10px',
+        'padding-right': '0px',
+        'margin-right': 'var(--su16)',
+        display: 'flex',
       });
       let iframeHeightDebounceTimer = null;
       const resizeObserver = new ResizeObserver(() => {
