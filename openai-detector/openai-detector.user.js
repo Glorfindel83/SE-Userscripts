@@ -364,7 +364,7 @@
       const iframeContainerHeightStorageKey = 'SEOAID-iframeContainer-height';
       iframe.css({
         border: 'unset',
-        'flex-basis': '100%',
+        'width': '100%',
       });
       // CSS resize doesn't work on iframes in Firefox
       iframeContainer.css({
@@ -642,9 +642,10 @@
         localStorage[storageKey] = containerHeight;
     }
 
-    function createButton(text, className, onClick) {
+    function createButton(text, className, title, onClick) {
       const button = document.createElement('button');
       button.textContent = text;
+      button.title = title;
       button.className = className + ' SEOAID-header-button';
       button.addEventListener('click', onClick);
       return button;
@@ -671,12 +672,13 @@
       textbox.dispatchEvent(new InputEvent('input'));
     }
 
-    /* The following regexes were taken from SOCVR's Magic Editor:
+    /* The following regexes were taken from SOCVR's Magic Editor version 1.8.0:
          https://github.com/SO-Close-Vote-Reviewers/UserScripts#magic-editor
          https://github.com/SO-Close-Vote-Reviewers/UserScripts/blob/master/Magic%E2%84%A2Editor.user.js
-       It's authored by multiple people.  It's mostly under an MIT license, but your
+       It's authored by multiple people.  It's mostly under an MIT license, but you
          should check the specifics in the repository and commits.
-         They have been modified.
+         They have been modified. It's expected the changes will be copied back
+         to Magic Editor.
      */
     const codeBlockRegexes = {
       // code fences
@@ -685,13 +687,13 @@
       "codeFences": /^(?=```)(`{3,})[^\r\n]*[\r\n]*(?<codeText>[^]+?)\1/gm,
       // indented code blocks
       //        https://regex101.com/r/uTI5VH/2
-      "indentedCodeBlock":  /(?<codeText>(?:(?:^[ \t]*(?:[\r\n]|\r\n))^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ \t]+\n)*)+)+))/gm,
-      // indented code blocks at the start of the post.
+      "indentedCodeBlocks":  /(?<codeText>(?:(?:^[ \t]*(?:[\r\n]|\r\n))^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ \t]+\n)*)+)+))/gm,
+      // indented code block at the start of the post.
       //        https://regex101.com/r/Dsn0Wy/2
       "indentedCodeBlockAtStart":  /(?<codeText>(?:^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ ]+\n)*)+)+))/g,
       // <pre></pre> blocks
       //        https://regex101.com/r/Gi0ysr/2
-      "preBlock": /<pre(?: [^>]*?|)>(?<innerCodeElement><code(?: [^>]*?|)>(?<codeText>[\W\w]*?)<\/code>)<\/pre>|<pre(?: [^>]*?|)>(?<preText>[\W\w]*?)<\/pre>/gi,
+      "preBlocks": /<pre(?: [^>]*?|)>(?<innerCodeElement><code(?: [^>]*?|)>(?<codeText>[\W\w]*?)<\/code>)<\/pre>|<pre(?: [^>]*?|)>(?<preText>[\W\w]*?)<\/pre>/gi,
     };
     const inlineCodeRegexes = {
       //  These do *not* prevent matching within code blocks, so code blocks must be removed first.
@@ -700,7 +702,7 @@
       "inlineCode": /(?!^```)`(?<!``)(?:(`*)(?<codeText>(?:\\`|[^`](?!\n\n))+)`\1)/gm,
       // <code></code> blocks
       //        https://regex101.com/r/7UGbRu/2
-      "codeTag":  /<code(?<!<pre><code)(?: [^>]*?|)>(?<codeText>[\W\w]*?)<\/code>/gi,
+      "codeTags":  /<code(?<!<pre><code)(?: [^>]*?|)>(?<codeText>[\W\w]*?)<\/code>/gi,
     };
     const allCodeRegexes = Object.assign({}, codeBlockRegexes, inlineCodeRegexes);
     const linkRegexes = {
@@ -709,17 +711,23 @@
       //   The prior version of this was https://regex101.com/r/tZ4eY3/7 it was saved and became version 21.
       //   It was then forked into it's own regex:
       //        https://regex101.com/r/C7nXfd/2
-      "lsec":   /(?:^ *(?:[\r\n]|\r\n))?(?: {2}(?:\[\d\]): \w*:+\/\/.*\n*)+/gm,
+      "linkSections":   /(?:^ *(?:[\r\n]|\r\n))?(?: {2}(?:\[\d\]): \w*:+\/\/.*\n*)+/gm,
       // links and pathnames
-      //   See comment above the "lsec" RegExp regarding testing sharing the same "regex" on regex101.com
+      //   See comment above the "linkSections" RegExp regarding testing sharing the same "regex" on regex101.com
       //        https://regex101.com/r/tZ4eY3/26
       "links":  /!?\[(?<!\\\[)(?<linkText>(?:[^\]\n]|\\\]|\]\((?=[^)]+\)\]))+)\](?:\((?:[^\)\n"]|"(?:[^"]|"(?!\)))*"(?=\)))+\)|\[[^\]\n]+\])(?:\](?:\([^\)\n]+\)|\[[^\]\n]+\]))?|(?:\/\w+\/|.:\\|\w*:\/\/|\.+\/[./\w\d]+|(?:\w+\.\w+){2,})[./\w\d:/?#\[\]@!$&'()*+,;=\-~%]*/gi,
       // HTML anchor elements
       //        https://regex101.com/r/j8MnYg/1
       "htmlAnchors":  /<a [^>]*>(?<linkText>(?:[^<]|<(?!\/a>))*)<\/a>/gi,
     };
+    const formattingRegexes = {
+      // bold and italics
+      //   This leaves quite a bit to be desired, but should work under most cases to match the first layer.
+      //        https://regex101.com/r/WkevC2/1
+      "boldAndItalics":  /((_|\*)(?<!\\\2)\2{0,2}(?!\2))(?!\s)(?<formattedText>(?:.(?!\2)|\\)+?.)\1(?<!\\\1)/gi,
+    };
 
-    function regexRemovalsWithProtection(text, keepRegexes, removeRegexes, namedGroupsToKeep) {
+    function regexRemovalsWithProtection(text, keepRegexes, removeRegexes, namedGroupsToKeep, processKeeps) {
       function normalizeSomeTypesToArray(value) {
         if (!Array.isArray(value)) {
           if (value instanceof RegExp) {
@@ -753,7 +761,11 @@
           text = text.replace(reg, function(match, p1) {
             const matchedGroups = arguments[arguments.length - 1];
             if (typeof matchedGroups === 'object') {
-              return Object.entries(matchedGroups).reduce((sum, [key, value]) => sum + namedGroupsToKeep.includes(key) ? value : '', '');
+              let keepText = Object.entries(matchedGroups).reduce((sum, [key, value]) => sum + namedGroupsToKeep.includes(key) ? value || '' : '', '');
+              if (typeof processKeeps === 'function') {
+                keepText = processKeeps(keepText);
+              }
+              return keepText;
             }
             return '';
           });
@@ -769,10 +781,20 @@
       return text;
     }
 
-    function textboxRegexRemovalsWithProtection(keepRegexes, removeRegexes, namedGroupsToKeep) {
+    function textboxRegexRemovalsWithProtection(keepRegexes, removeRegexes, namedGroupsToKeep, processKeeps) {
       const textbox = document.getElementById('textbox');
       const initialText = textbox.value;
-      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, keepRegexes, removeRegexes, namedGroupsToKeep).trim(), true);
+      setTextAndTriggerPrediction(regexRemovalsWithProtection(initialText, keepRegexes, removeRegexes, namedGroupsToKeep, processKeeps).trim(), true);
+    }
+
+    function flushLeftText(minLeftSpaces, textToAdjust) {
+      const lines = textToAdjust.split(/[\r\n]+/g);
+      const minStartSpaces = textToAdjust.split(/[\r\n]+/g).reduce((sum, text) => {
+        const trimLength = text.trimStart().length;
+        return Math.min(sum, trimLength ? text.length - trimLength : sum);
+      }, 9999999);
+      const leftSpaces = ' '.repeat(minLeftSpaces);
+      return lines.map((line) => leftSpaces + line.slice(minStartSpaces)).join('\n');
     }
 
     makyenUtilities.xhook.load();
@@ -784,19 +806,26 @@
     const headerContainer = document.querySelector('.SEOAID-header-container');
     const headerButtonContainer = document.querySelector('.SEOAID-header-button-container');
     headerContainer.prepend(header);
-    headerButtonContainer.append(createButton('Restore text', 'SEOAID-restore-text-button', () => setTextAndTriggerPrediction(receivedText, true)));
+    headerButtonContainer.append(createButton('Restore text', 'SEOAID-restore-text-button', 'Restore the text to what was initially automatically placed in the textbox.', () => setTextAndTriggerPrediction(receivedText, true)));
     headerButtonContainer.insertAdjacentHTML('beforeend', '<span class="SEOAID-strip-buttons-wrap"><span class="SEOAID-strip-buttons-text"></span><span class="SEOAID-strip-buttons-container"></span></span>');
     const stripButtonsWrap = headerButtonContainer.querySelector('.SEOAID-strip-buttons-wrap');
     const stripButtonsText = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-text');
     stripButtonsText.append('Strip: ');
     const stripButtonsContainer = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-container');
-    stripButtonsContainer.append(createButton('links', 'SEOAID-strip-links-button', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes, ['linkText'])));
-    stripButtonsContainer.append(createButton('links and link text', 'SEOAID-strip-links-and-link-text-button', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes)));
-    stripButtonsContainer.append(createButton('code blocks', 'SEOAID-strip-code blocks-button', () => textboxRegexRemovalsWithProtection(null, codeBlockRegexes)));
-    stripButtonsContainer.append(createButton('HTML comments', 'SEOAID-strip-HTML-comments-button', () => textboxRegexRemovalsWithProtection(allCodeRegexes, /<!--.*?-->[\r\n]*/g)));
+    stripButtonsContainer.append(createButton('links', 'SEOAID-strip-links-button', 'Remove links, but not the link text. Spammers tend to link existing words to their domain. This will remove the links.', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes, ['linkText'])));
+    stripButtonsContainer.append(createButton('links & text', 'SEOAID-strip-links-and-link-text-button', 'Remove links and link text. Spammers also tend to insert their own text with links. This removes both the link and link text.', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes)));
+    stripButtonsContainer.append(createButton('code blocks', 'SEOAID-strip-code blocks-button', 'Remove code blocks, including code.', () => textboxRegexRemovalsWithProtection(null, codeBlockRegexes)));
+    stripButtonsContainer.append(createButton('<!-- -->', 'SEOAID-strip-HTML-comments-button', 'Remove HTML comments (e.g. used to indicate Stack Snippets).', () => textboxRegexRemovalsWithProtection(allCodeRegexes, /<!--.*?-->[\r\n]*/g)));
+    stripButtonsContainer.append(createButton('```', 'SEOAID-strip-code-fence-formatting-button', 'Remove code fence formatting. This removes just the code fence formatting, not the code.', () => textboxRegexRemovalsWithProtection(null, codeBlockRegexes.codeFences, ['codeText'])));
+    stripButtonsContainer.append(createButton('⭰', 'SEOAID-strip-unindent-code-block-formatting-button', 'Remove the indent from Markdown indented code format. It makes the code block flush against the start of the line, but retains relative indents internal to the code.', () => textboxRegexRemovalsWithProtection(codeBlockRegexes.codeFences, {
+      indentedCodeBlocks: codeBlockRegexes.indentedCodeBlocks,
+      indentedCodeBlockAtStart: codeBlockRegexes.indentedCodeBlockAtStart,
+    }, ['codeText'], flushLeftText.bind(null, 0))));
+    stripButtonsContainer.append(createButton('`code`', 'SEOAID-strip-inline-code-formatting-button', 'Remove inline code formatting.', () => textboxRegexRemovalsWithProtection(codeBlockRegexes, inlineCodeRegexes, ['codeText'])));
+    stripButtonsContainer.append(createButton('bold & italics', 'SEOAID-strip-bold-and-italics-formatting-button', 'Remove bold and italics formatting. It may be necessary to do this more than once to get all of it.', () => textboxRegexRemovalsWithProtection(allCodeRegexes, formattingRegexes.boldAndItalics, ['formattedText'])));
 
     document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-styles">
-/* Styles when not in iframe*/
+/* Styles when not in iframe */
 body {
   padding: 0px 3vw;
 }
@@ -818,22 +847,14 @@ h1 {
 .SEOAID-have-received-text .SEOAID-restore-text-button {
   display: unset;
 }
-.SEOAID-header-button:not(:first-of-type) {
-  /*margin-left: 5px;*/
-}
 .SEOAID-header-button-container {
   display: flex;
-  gap: 5px;
+  gap: 10px;
   height: min-content;
-  flex-wrap: wrap;
   padding: 15px 0px 0px 0px;
   align-self: center;
 }
 .SEOAID-strip-buttons-wrap {
-  margin-left: 10px;
-}
-.SEOAID-strip-buttons-wrap {
-  margin-left: 10px;
   white-space: nowrap;
   display: flex;
 }
@@ -846,6 +867,17 @@ h1 {
   content: " (request text truncated)";
   color: red;
 }
+.SEOAID-strip-unindent-code-block-formatting-button {
+  line-height: 0;
+  font-size: 26px;
+  line-height: 16px;
+  padding-top: 0;
+}
+.SEOAID-strip-code-fence-formatting-button {
+  font-weight: bold;
+  font-size: 16px;
+  line-height: 16px;
+}
 </style>`);
     if (window !== window.top) {
       // in iframe
@@ -856,7 +888,7 @@ body {
 }
 #container {
   width: 100%;
-  padding: 10px;
+  padding: 5px min(1.5vw, 10px);
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -868,7 +900,7 @@ h1 {
 }
 #textbox {
   width: 100%;
-  padding: 5px 10px;
+  padding: 5px min(1.5vw, 10px);
   font-size: 15px;
   line-height: 19.5px;
 }
