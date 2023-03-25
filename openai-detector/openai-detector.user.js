@@ -357,26 +357,16 @@
     }
 
     function addSeoaidIframe(button, method, where, iframeAncestor, getText) {
-      where[method](`<div class="SEOID-iframe-container post-layout--right"><iframe sandbox="allow-same-origin allow-scripts" class="SEOAID-oaid-iframe" src="https://openai-openai-detector.hf.space/"></iframe></div>`);
+      where[method](`<div class="SEOID-iframe-container post-layout--right"><div class="SEOAID-iframe-close-button-container"><span class="SEOAID-iframe-close-button" title="close this GPT-2 Output Detector Demo iframe">×</span></div><iframe sandbox="allow-same-origin allow-scripts" class="SEOAID-oaid-iframe" src="https://openai-openai-detector.hf.space/"></iframe></div>`);
       button.addClass('SEOAID-iframe-open SEOAID-iframe-created');
       const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
       const iframeContainer = iframeAncestor.find('.SEOID-iframe-container');
       const iframeContainerHeightStorageKey = 'SEOAID-iframeContainer-height';
-      iframe.css({
-        border: 'unset',
-        'width': '100%',
-      });
       // CSS resize doesn't work on iframes in Firefox
       iframeContainer.css({
-        resize: 'vertical',
-        'overflow-y': 'auto',
         height: localStorage[iframeContainerHeightStorageKey] || '770px',
-        border: '2px solid #333',
-        'margin-top': '10px',
-        'padding-right': '0px',
-        'margin-right': 'var(--su16)',
-        display: 'flex',
       });
+      iframeContainer.find('.SEOAID-iframe-close-button-container').on('click', () => button.click());
       let iframeHeightDebounceTimer = null;
       const resizeObserver = new ResizeObserver(() => {
         clearTimeout(iframeHeightDebounceTimer);
@@ -952,6 +942,39 @@ h1 {
       return;
   }
 
+  document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-styles-for-in-page-iframe">
+/* Styles for in page iframe */
+.SEOAID-oaid-iframe {
+  border: unset;
+  width: 100%;
+}
+.SEOID-iframe-container {
+  resize: vertical;
+  overflow-y: auto;
+  border: 2px solid #333;
+  margin-top: 10px;
+  padding-right: 0px;
+  margin-right: var(--su16);
+  display: flex;
+  position: relative;
+}
+.SEOAID-iframe-close-button-container {
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  cursor: pointer;
+}
+.SEOAID-iframe-close-button {
+  /* These are copied from SE's popup close button. */
+  padding: 3px 6px 2px;
+  font-size: var(--fs-body3);
+  font-weight: normal;
+  color: hsl(0,0%,100%) !important;
+  background-color: hsl(210,8%,5%);
+  font-family: Arial,Helvetica,sans-serif;
+  line-height: 1;
+}
+</style>`);
   makyenUtilities.executeInPage(inSEorMSPage, true, 'OpenAI-detector-page-script');
 
   function receiveRequestForDataFromPage(event) {
