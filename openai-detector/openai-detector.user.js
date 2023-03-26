@@ -644,6 +644,7 @@
     function setTextAndTriggerPrediction(text, retainCurrentInsertOffset) {
       const textbox = document.getElementById('textbox');
       const origSelectionEnd = textbox.selectionEnd || 0;
+      const origScrollTop = textbox.scrollTop || 0;
       textbox.select();
       try {
         // This will put the replacement in the textbox's "undo" stack.
@@ -658,6 +659,15 @@
       if (retainCurrentInsertOffset) {
         // This isn't perfect, but it's probably closer to what a user expects.
         textbox.selectionEnd = origSelectionEnd;
+        // A setTimeout here is needed.  If the textbox.scrollTop is not delayed, then it's
+        // ineffective, at least in Firefox.
+        // The process does result in a flash movement, but the disruption is minimal and it
+        // does end up mostly where it was.  If we wanted to get fancy, we'd determine how
+        // much of the text is being changed prior to the insert and scroll locations and
+        // adjust the values based on that.
+        setTimeout(() => {
+          textbox.scrollTop = origScrollTop;
+        }, 0);
       }
       textbox.dispatchEvent(new InputEvent('input'));
     }
