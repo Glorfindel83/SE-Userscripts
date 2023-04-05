@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.10
+// @version     2.11
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
