@@ -61,7 +61,8 @@ let allPronouns = [
   "she", "her?", // that covers 'he' as well
   "they", "them", "their",
   "ze", "hir", "zir",
-  "xey", "xem", "xyr"
+  "xey?", "xem", "xyr",
+  "faer?"
 ].join("|");
 let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
