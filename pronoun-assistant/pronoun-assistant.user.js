@@ -64,7 +64,7 @@ let allPronouns = [
   "xey?", "xem", "xyr",
   "faer?"
 ].join("|");
-let pronounListRegex = new RegExp('\\W*((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\W*', 'i');
+let pronounListRegex = new RegExp('\\b((' + allPronouns + ')(\\s*/\\s*(' + allPronouns + '))+)\\b', 'i');
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
 let explicitPronounsRegex = /pronouns:\s*([^.\n)\]}<]*)(\.|\n|\)|]|}|<|$)/im;
 let unlikelyCombinations = ["her/his", "her/him", "he/she"];
