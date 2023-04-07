@@ -186,6 +186,7 @@ function getPronouns(aboutMe, allowPronounIslandLinks) {
   // Link to Pronoun Island, e.g.
   // http://my.pronoun.is/she
   var match = myPronounIsRegex.exec(aboutMe);
+  myPronounIsRegex.lastIndex = 0;
   if (match != null) {
     return allowPronounIslandLinks ? '<a href=\"' + match[0] + '\" target="_blank">' + match[0] + '</a>'
       : match[3];
@@ -195,6 +196,7 @@ function getPronouns(aboutMe, allowPronounIslandLinks) {
   // Pronouns: he/him.
   // The end is indicated by a dot, a newline, or simply the end of the text.
   match = explicitPronounsRegex.exec(aboutMe);
+  explicitPronounsRegex.lastIndex = 0;
   if (match != null) {
     return match[1];
   }
@@ -204,6 +206,7 @@ function getPronouns(aboutMe, allowPronounIslandLinks) {
   // (he/him/his)
   // they / them
   match = pronounListRegex.exec(aboutMe);
+  pronounListRegex.lastIndex = 0;
   if (match != null) {
     // Check for unlikely combinations, cf. https://stackapps.com/a/8567/34061
     let pronouns = match[1].split(/\s*\/\s*/);
