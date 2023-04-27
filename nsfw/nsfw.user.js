@@ -26,7 +26,7 @@
 (function () {
   "use strict";
 
-  $('b:contains("This post is hidden")').each(function() {
+  $('aside:contains("It was flagged as spam or offensive content")').each(function() {
     let postBody = $(this).parents("div.js-post-body");
     let post = postBody.parents("div.deleted-answer");
 
