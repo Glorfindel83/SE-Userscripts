@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.5
+// @version     0.6
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -26,33 +26,32 @@
 (function () {
   "use strict";
 
-  $('span.hidden-deleted-question, span.hidden-deleted-answer').each(function() {
-    let self = this;
+  $('b:contains("This post is hidden")').each(function() {
+    let postBody = $(this).parents("div.js-post-body");
+    let post = postBody.parents("div.deleted-answer");
 
     // Load revision history
-    let revisionHistory = $(this).find('a').attr('href');
+    let revisionHistory = postBody.children('a').attr('href');
     let postID = parseInt(revisionHistory.split('/')[2]);
     $.get(revisionHistory, function(historyData) {
       // Find link to latest revision
       let href = $(historyData).find(".js-revisions a[href^='/revisions/" + postID + "/']")[0].getAttribute('href');
       $.get(href, function(data) {
         // Question?
-        if (self.className == 'hidden-deleted-question') {
+        if (post.hasClass('question')) {
           // Replace question title
           let title = $(data).find('a.question-hyperlink')[0].innerHTML;
           document.getElementById('question-header').getElementsByTagName('h1')[0].innerHTML = title;
         }
 
-        // Replace post content
-        self.innerHTML = $(data).find('div.js-post-body')[0].innerHTML;
+        // Replace post body
+        postBody[0].innerHTML = $(data).find('div.js-post-body')[0].innerHTML;
 
         // Add link to revision history
         let button = $('<a href="' + revisionHistory + '">Revisions</a>');
-        console.log(button);
         let cell = $('<div class="grid--cell"></div>');
         cell.append(button);
-        console.log(cell);
-        let menu = $(self.parentElement.parentElement).find('div.js-post-menu')[0];
+        let menu = post.find('div.js-post-menu')[0];
         $(menu).append(cell);
         $('<div>post content normally hidden, but made visible by the NSFW userscript</div>').insertAfter($(menu));
       });
