@@ -17,7 +17,7 @@
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
 // @match       *://metasmoke.erwaysoftware.com/*
-// @match       *://openai-openai-detector.hf.space/
+// @include     /^https:\/\/[%\w-]*openai-detector[%\w-]*\.hf\.space\//
 // @exclude     *://stackexchange.com/*
 // @exclude     *://api.*
 // @exclude     *://blog.*
@@ -32,7 +32,7 @@
 // @exclude     *://*.askubuntu.com/questions/ask
 // @exclude     *://*.stackapps.com/questions/ask
 // @exclude     *://*.mathoverflow.net/questions/ask
-// @connect     openai-openai-detector.hf.space
+// @connect     hf.space
 // @require     https://cdn.jsdelivr.net/gh/makyen/extension-and-userscript-utilities@3b1b0aeae424bfca448d72d60a3dc998d5c53406/executeInPage.js
 // @require     https://cdn.jsdelivr.net/gh/makyen/extension-and-userscript-utilities@703bcfed979737808567e8b91240f984392f85a0/loadXHook.js
 // @grant       GM_xmlhttpRequest
@@ -55,7 +55,16 @@
    * from the OpenAI Detector.
   */
 
-  function inSEorMSPage() {
+  const IFRAME_HOST = 'openai-openai-detector.hf.space';
+  const IFRAME_ORIGIN = `https://${IFRAME_HOST}`;
+  const IFRAME_PATH = '';
+  const IFRAME_URL = IFRAME_ORIGIN + IFRAME_PATH;
+  const IFRAME_ORIGIN_REGEX = /^https:\/\/[%\w-]*openai-detector[%\w-]*\.hf\.space(?:\/|$)/;
+  const DETECTOR_ORIGIN = IFRAME_ORIGIN;
+  const DETECTOR_PATH = '/';
+  const DETECTOR_BASE_URL = DETECTOR_ORIGIN + DETECTOR_PATH;
+
+  function inSEorMSPage(IFRAME_ORIGIN, IFRAME_URL, IFRAME_ORIGIN_REGEX) {
     const cache = {};
     const SE_API_CONSTANTS = {
       key: 'b4pJgQpVylPHom5vj811QQ((',
@@ -369,7 +378,7 @@
     }
 
     function addSeoaidIframe(button, method, where, iframeAncestor, getText) {
-      where[method](`<div class="SEOID-iframe-container post-layout--right"><div class="SEOAID-iframe-close-button-container"><span class="SEOAID-iframe-close-button" title="close this GPT-2 Output Detector Demo iframe">×</span></div><iframe sandbox="allow-same-origin allow-scripts" class="SEOAID-oaid-iframe" src="https://openai-openai-detector.hf.space/"></iframe></div>`);
+      where[method](`<div class="SEOID-iframe-container post-layout--right"><div class="SEOAID-iframe-close-button-container"><span class="SEOAID-iframe-close-button" title="close this GPT-2 Output Detector Demo iframe">×</span></div><iframe sandbox="allow-same-origin allow-scripts allow-storage-access-by-user-activation" class="SEOAID-oaid-iframe" src="${IFRAME_URL}"></iframe></div>`);
       button.addClass('SEOAID-iframe-open SEOAID-iframe-created');
       const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
       const iframeContainer = iframeAncestor.find('.SEOID-iframe-container');
@@ -388,7 +397,8 @@
       const iframeEl = iframe[0];
       window.addEventListener('message', (event) => {
         const iframeWindow = iframeEl.contentWindow;
-        if (event.source === iframeWindow && event.origin === 'https://openai-openai-detector.hf.space') {
+        if (event.source === iframeWindow && IFRAME_ORIGIN_REGEX.test(event.origin)) {
+          IFRAME_ORIGIN = event.origin;
           // It's from this iframe.
           const data = event.data;
           if (typeof data === 'object' && data.messageType === 'SEOAID-iframe-ready') {
@@ -397,7 +407,7 @@
                 iframeWindow.postMessage({
                   messageType: 'SEOAID-fill-text',
                   textToTest,
-                }, 'https://openai-openai-detector.hf.space');
+                }, IFRAME_ORIGIN);
               });
           }
         }
@@ -462,7 +472,7 @@
       // Regular posts
       const menu = $(this);
       // Add button
-      const button = $('<a class="SEOAID-post-menu-button" href="https://openai-openai-detector.hf.space/" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</button>');
+      const button = $(`<a class="SEOAID-post-menu-button" href="${IFRAME_URL}" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</button>`);
       const cell = $('<div class="flex--item SEOAID-post-menu-item"></div>');
       cell.append(button);
       menu.children().first().append(cell);
@@ -514,7 +524,7 @@
       // Regular posts
       const tabContent = $(this);
       // Add button
-      const button = $('<a class="SEOAID-markdown-button" href="https://openai-openai-detector.hf.space/" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</a>');
+      const button = $(`<a class="SEOAID-markdown-button" href="${IFRAME_URL}" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</a>`);
       const cell = $('<div class="SEOAID-Markdown-button-cntainer"></div>');
       cell.append(button);
       tabContent.append(cell);
@@ -607,7 +617,7 @@
         $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
           const sourceButton = $(this);
           // Add button
-          const button = $('<a class="flex--item" title="Run the revision content through the Hugging Face GPT-2 Output Detector." href="https://openai-openai-detector.hf.space/">Detect OpenAI</a>');
+          const button = $(`<a class="flex--item" title="Run the revision content through the Hugging Face GPT-2 Output Detector." href="${IFRAME_URL}">Detect OpenAI</a>`);
           const sourceUrl = sourceButton[0].href;
           const menu = sourceButton.parent();
           menu.append(button);
@@ -959,7 +969,7 @@ h1 {
     }
   }
 
-  if (window.location.hostname === "openai-openai-detector.hf.space") {
+  if (IFRAME_ORIGIN_REGEX.test(window.location.origin)) {
       inOpenAIDetectorPage();
       return;
   }
@@ -997,7 +1007,7 @@ h1 {
   line-height: 1;
 }
 </style>`);
-  makyenUtilities.executeInPage(inSEorMSPage, true, 'OpenAI-detector-page-script');
+  makyenUtilities.executeInPage(inSEorMSPage, true, 'OpenAI-detector-page-script', IFRAME_ORIGIN, IFRAME_URL, IFRAME_ORIGIN_REGEX);
 
   function receiveRequestForDataFromPage(event) {
     const text = JSON.parse(event.detail);
@@ -1014,7 +1024,7 @@ h1 {
   function detectAI(text) {
     // The GM polyfill doesn't convert GM_xmlhttpRequest to a useful Promise in all userscript managers (i.e. Violentmonkey), so...
     const gmXmlhttpRequest = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : GM.xmlHttpRequest;
-    const baseURL = "https://openai-openai-detector.hf.space/openai-detector";
+    const baseURL = DETECTOR_BASE_URL;
     const fullURL = `${baseURL}?${encodeURIComponent(text)}`;
     // Restrict the length of OAI API request URLs to prevent 414 Request URI Too Long errors
     let maxCharacters = 16400;
