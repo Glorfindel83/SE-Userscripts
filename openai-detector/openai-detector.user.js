@@ -916,10 +916,10 @@ h1 {
   color: red;
 }
 .SEOAID-strip-unindent-code-block-formatting-button {
-  line-height: 0;
+  line-height: 12px;
   font-size: 26px;
-  line-height: 16px;
   padding-top: 0;
+  padding-bottom: 6px;
 }
 .SEOAID-strip-code-fence-formatting-button {
   font-weight: bold;
