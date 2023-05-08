@@ -715,8 +715,8 @@
     const codeBlockRegexes = {
       // code fences
       //   Code blocks starting and ending with a code fence. Does not include inline code
-      //        https://regex101.com/r/3Rb4Id/2
-      "codeFences": /^(?=```)(`{3,})[^\r\n]*[\r\n]*(?<codeText>[^]+?)\1/gm,
+      //        https://regex101.com/r/3Rb4Id/3
+      "codeFences": /^ *(?=```)(`{3,})[^\r\n]*[\r\n]*(?<codeText>[^]+?)\1/gm,
       // indented code blocks
       //        https://regex101.com/r/uTI5VH/2
       "indentedCodeBlocks":  /(?<codeText>(?:(?:^[ \t]*(?:[\r\n]|\r\n))^(?:(?:[ ]{4}|[ ]{0,3}\t).+(?:[\r\n]?(?!\n\S)(?:[ \t]+\n)*)+)+))/gm,
