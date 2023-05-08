@@ -627,7 +627,7 @@
         });
       }
     }
-  }
+  } /* inSEorMSPage */
 
   function inPageAdjustHuggingFaceAPICall(request) {
     const [_, baseURL, originalQuery] = request.url.match(/^([^?]+)\?(.+)$/s);
@@ -691,7 +691,7 @@
       if (retainCurrentInsertOffset) {
         // This isn't perfect, but it's probably closer to what a user expects.
         textbox.selectionEnd = origSelectionEnd;
-        // A setTimeout here is needed.  If the textbox.scrollTop is not delayed, then it's
+        // A setTimeout is needed here.  If the textbox.scrollTop is not delayed, then it's
         // ineffective, at least in Firefox.
         // The process does result in a flash movement, but the disruption is minimal and it
         // does end up mostly where it was.  If we wanted to get fancy, we'd determine how
@@ -739,7 +739,7 @@
     const allCodeRegexes = Object.assign({}, codeBlockRegexes, inlineCodeRegexes);
     const linkRegexes = {
       // link-sections
-      //   Testing of this and the "links" RegExp were done within the same regex101.com "regex".
+      //   Testing of this and the "links" RegExp was done within the same regex101.com "regex".
       //   The prior version of this was https://regex101.com/r/tZ4eY3/7 it was saved and became version 21.
       //   It was then forked into it's own regex:
       //        https://regex101.com/r/C7nXfd/2
