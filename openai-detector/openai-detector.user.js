@@ -630,22 +630,32 @@
   }
 
   function inPageAdjustHuggingFaceAPICall(request) {
-    const adjustedUrl = request.url.replace(/^([^?]+)\?(.+)$/s, (match, p1, p2) => `${p1}?${encodeURIComponent(p2)}`);
-    // The HF API returns an error when the URL is longer than 16,411 characters.
-    // So, we truncate at 16,400.
-    let maxCharacters = 16400;
-    if (adjustedUrl[maxCharacters - 1] === '%') {
-      maxCharacters--;
+    const [_, baseURL, originalQuery] = request.url.match(/^([^?]+)\?(.+)$/s);
+    const encodedText = encodeURIComponent(originalQuery);
+    // The HF API returns an error when the query is longer than 16383 characters.
+    let maxQueryCharacters = 16382;
+    // Account for the maximum potentially being in the middle of an encoded character.
+    let truncatedQuery = encodedText.slice(0, maxQueryCharacters);
+    if (maxQueryCharacters < encodedText.length) {
+      let wasError = true;
+      while (wasError) {
+        try {
+          decodeURIComponent(truncatedQuery);
+          wasError = false;
+        } catch(error) {
+          wasError = true;
+          maxQueryCharacters--;
+          truncatedQuery = encodedText.slice(0, maxQueryCharacters);
+        }
+      }
     }
-    if (adjustedUrl[maxCharacters - 2] === '%') {
-      maxCharacters -= 2;
-    }
-    if (maxCharacters < adjustedUrl.length) {
+    const fullURL = `${baseURL}?${truncatedQuery}`;
+    if (maxQueryCharacters < encodedText.length) {
       document.body.classList.add('SEOAID-request-truncated');
     } else {
       document.body.classList.remove('SEOAID-request-truncated');
     }
-    request.url = adjustedUrl.slice(0, maxCharacters);
+    request.url = fullURL;
   }
 
   function inOpenAIDetectorPage() {
@@ -1025,19 +1035,28 @@ h1 {
     // The GM polyfill doesn't convert GM_xmlhttpRequest to a useful Promise in all userscript managers (i.e. Violentmonkey), so...
     const gmXmlhttpRequest = typeof GM_xmlhttpRequest === 'function' ? GM_xmlhttpRequest : GM.xmlHttpRequest;
     const baseURL = DETECTOR_BASE_URL;
-    const fullURL = `${baseURL}?${encodeURIComponent(text)}`;
+    const encodedText = encodeURIComponent(text);
+    let maxQueryCharacters = 16382;
     // Restrict the length of OAI API request URLs to prevent 414 Request URI Too Long errors
-    let maxCharacters = 16400;
-    if (fullURL[maxCharacters - 1] === '%') {
-      maxCharacters--;
+    let truncatedQuery = encodedText.slice(0, maxQueryCharacters);
+    if (maxQueryCharacters < encodedText.length) {
+      let wasError = true;
+      while (wasError) {
+        try {
+          decodeURIComponent(truncatedQuery);
+          wasError = false;
+        } catch(error) {
+          wasError = true;
+          maxQueryCharacters--;
+          truncatedQuery = encodedText.slice(0, maxQueryCharacters);
+        }
+      }
     }
-    if (fullURL[maxCharacters - 2] === '%') {
-      maxCharacters -= 2;
-    }
+    const fullURL = `${baseURL}?${truncatedQuery}`;
     return new Promise((resolve, reject) => {
       gmXmlhttpRequest({
         method: "GET",
-        url: fullURL.slice(0, maxCharacters),
+        url: fullURL,
         timeout: 60000, // There's no particular reason for this length, but don't want to hang forever.
         onload: resolve,
         onabort: reject,
