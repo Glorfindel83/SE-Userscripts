@@ -760,50 +760,63 @@
     };
 
     function regexRemovalsWithProtection(text, keepRegexes, removeRegexes, namedGroupsToKeep, processKeeps) {
-      function normalizeSomeTypesToArray(value) {
+      function normalizeSomeTypesToArrayOfObjects(value) {
         if (!Array.isArray(value)) {
           if (value instanceof RegExp) {
-            value = [value];
+            value = [{value}];
           } else if (value !== null && typeof value === 'object' ) {
-            value = Object.values(value);
+            value = [value];
           } else {
             value = [];
           }
+        } else {
+          value = value.map((val, index) => {
+            if (val instanceof RegExp) {
+              val = {[`RegExp${index}`]: val};
+            }
+            // Other than Objects, which are fine as-is, we don't have other types which are known how to handle.
+            // So, we just let any errors happen later.
+            return val;
+          });
         }
         return value;
       }
 
       namedGroupsToKeep = typeof namedGroupsToKeep === 'string' ? [namedGroupsToKeep] : namedGroupsToKeep;
-      keepRegexes = normalizeSomeTypesToArray(keepRegexes);
-      removeRegexes = normalizeSomeTypesToArray(removeRegexes);
+      keepRegexes = normalizeSomeTypesToArrayOfObjects(keepRegexes);
+      removeRegexes = normalizeSomeTypesToArrayOfObjects(removeRegexes);
       text = text.replace(/Q/g, 'QA'); // Free up placeholders
       let currentCodePoint = 'A'.codePointAt(0) + 1;
       const substitutions = [];
-      Object.values(keepRegexes).forEach((reg) => {
-        reg.lastIndex = 0;
-        text = text.replace(reg, (match) => {
-          const placeholder = `Q${String.fromCodePoint(currentCodePoint++)}`;
-          substitutions.push([placeholder, match]);
-          return placeholder;
+      keepRegexes.forEach((obj) => {
+        Object.entries(obj).forEach(([key, reg]) => {
+          reg.lastIndex = 0;
+          text = text.replace(reg, (match) => {
+            const placeholder = `Q${String.fromCodePoint(currentCodePoint++)}`;
+            substitutions.push([placeholder, match]);
+            return placeholder;
+          });
         });
       });
-      Object.values(removeRegexes).forEach((reg) => {
-        reg.lastIndex = 0;
-        if (Array.isArray(namedGroupsToKeep)) {
-          text = text.replace(reg, function(match, p1) {
-            const matchedGroups = arguments[arguments.length - 1];
-            if (typeof matchedGroups === 'object') {
-              let keepText = Object.entries(matchedGroups).reduce((sum, [key, value]) => sum + namedGroupsToKeep.includes(key) ? value || '' : '', '');
-              if (typeof processKeeps === 'function') {
-                keepText = processKeeps(keepText);
+      removeRegexes.forEach((obj) => {
+        Object.entries(obj).forEach(([key, reg]) => {
+          reg.lastIndex = 0;
+          if (Array.isArray(namedGroupsToKeep)) {
+            text = text.replace(reg, function(match, p1) {
+              const matchedGroups = arguments[arguments.length - 1];
+              if (typeof matchedGroups === 'object') {
+                let keepText = Object.entries(matchedGroups).reduce((sum, [key, value]) => sum + namedGroupsToKeep.includes(key) ? value || '' : '', '');
+                if (typeof processKeeps === 'function') {
+                  keepText = processKeeps(keepText);
+                }
+                return keepText;
               }
-              return keepText;
-            }
-            return '';
-          });
-        } else {
-          text = text.replace(reg, '');
-        }
+              return '';
+            });
+          } else {
+            text = text.replace(reg, '');
+          }
+        });
       });
       substitutions.reverse();
       substitutions.forEach(([placeholder, replacement]) => {
@@ -855,6 +868,8 @@
     }, ['codeText'], flushLeftText.bind(null, 0))));
     stripButtonsContainer.append(createButton('`code`', 'SEOAID-strip-inline-code-formatting-button', 'Remove inline code formatting.', () => textboxRegexRemovalsWithProtection(codeBlockRegexes, inlineCodeRegexes, ['codeText'])));
     stripButtonsContainer.append(createButton('bold & italics', 'SEOAID-strip-bold-and-italics-formatting-button', 'Remove bold and italics formatting. It may be necessary to do this more than once to get all of it.', () => textboxRegexRemovalsWithProtection(allCodeRegexes, formattingRegexes.boldAndItalics, ['formattedText'])));
+    stripButtonsContainer.append(createButton('\\s+ !code', 'SEOAID-strip-whitespace-not-code-button', 'Convert all sequences of whitespace (e.g. line endings), excluding in code, to a single space.', () => textboxRegexRemovalsWithProtection(codeBlockRegexes, [ /(?<whitespace>(?:[^\S\n\r]|[\n\r](?<!Q[^A][\n\r])(?!Q[^A]))+)/g, / (?<=[\n\r] )/g ], ['whitespace'], () => ' ')));
+    stripButtonsContainer.append(createButton('\\s+', 'SEOAID-strip-whitespace-button', 'Convert all sequences of whitespace (e.g. line endings), including in code, to a single space.', () => setTextAndTriggerPrediction((document.getElementById('textbox').value || '').replace(/\s+/g, ' '))));
 
     document.documentElement.insertAdjacentHTML('beforeend', `<style id="SEOAID-styles">
 /* Styles when not in iframe */
