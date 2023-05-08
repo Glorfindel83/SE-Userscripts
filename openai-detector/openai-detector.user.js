@@ -971,7 +971,14 @@ h1 {
       }
       textbox.style.resize = 'vertical';
       let textboxHeightDebounceTimer = null;
+      let resizeObserverHasSeenFirstResize = false;
       const resizeObserver = new ResizeObserver(() => {
+        if (!resizeObserverHasSeenFirstResize) {
+          // The observer appears to always get called upon the start of observation.
+          // We want to ignore that first call.
+          resizeObserverHasSeenFirstResize = true;
+          return;
+        }
         clearTimeout(textboxHeightDebounceTimer);
         textboxHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeight, 200, iframeTexboxHeightStorageKey, textbox);
       });
@@ -986,6 +993,14 @@ h1 {
               receivedText = textToTest;
               document.body.classList.add('SEOAID-have-received-text');
               setTextAndTriggerPrediction(textToTest, true);
+              setTimeout(() => {
+                resizeObserver.unobserve(textbox);
+                const storageIframeTextboxHeightPixels = Number((localStorage[iframeTexboxHeightStorageKey] || '').replaceAll('px', '')) || 480; // 480px is the default height.
+                textbox.style.height = 0;
+                textbox.style.height = `${Math.min(storageIframeTextboxHeightPixels, textbox.scrollHeight + 5)}px`;
+                resizeObserverHasSeenFirstResize = false;
+                setTimeout(() => resizeObserver.observe(textbox), 10);
+              }, 10);
             }
           }
         }
