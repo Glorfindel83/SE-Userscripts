@@ -842,7 +842,7 @@
     headerButtonContainer.insertAdjacentHTML('beforeend', '<span class="SEOAID-strip-buttons-wrap"><span class="SEOAID-strip-buttons-text"></span><span class="SEOAID-strip-buttons-container"></span></span>');
     const stripButtonsWrap = headerButtonContainer.querySelector('.SEOAID-strip-buttons-wrap');
     const stripButtonsText = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-text');
-    stripButtonsText.append('Strip: ');
+    stripButtonsText.append('Strip:');
     const stripButtonsContainer = stripButtonsWrap.querySelector('.SEOAID-strip-buttons-container');
     stripButtonsContainer.append(createButton('links', 'SEOAID-strip-links-button', 'Remove links, but not the link text. Spammers tend to link existing words to their domain. This will remove the links.', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes, ['linkText'])));
     stripButtonsContainer.append(createButton('links & text', 'SEOAID-strip-links-and-link-text-button', 'Remove links and link text. Spammers also tend to insert their own text with links. This removes both the link and link text.', () => textboxRegexRemovalsWithProtection(allCodeRegexes, linkRegexes)));
@@ -889,6 +889,7 @@ h1 {
 .SEOAID-strip-buttons-wrap {
   white-space: nowrap;
   display: flex;
+  gap: 5px;
 }
 .SEOAID-strip-buttons-container {
   display: flex;
@@ -939,6 +940,7 @@ h1 {
 #container > p {
   order: 10;
   margin-top: 2em;
+  display: none;
 }
 .SEOAID-header-button-container {
   margin: 0 auto .25em auto;
