@@ -1056,7 +1056,7 @@ h1 {
         }
       });
       window.top.postMessage({
-          messageType: 'SEOAID-iframe-ready',
+        messageType: 'SEOAID-iframe-ready',
       }, '*');
     }
   }
