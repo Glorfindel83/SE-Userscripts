@@ -383,17 +383,40 @@
       const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
       const iframeContainer = iframeAncestor.find('.SEOID-iframe-container');
       const iframeContainerHeightStorageKey = 'SEOAID-iframeContainer-height';
+      const iframeTextareaHeightStorageKey = `SEOAID-textarea-height-${IFRAME_ORIGIN}`;
       // CSS resize doesn't work on iframes in Firefox
-      iframeContainer.css({
-        height: localStorage[iframeContainerHeightStorageKey] || '770px',
-      });
+      let ignoreIframeContainerResize = true;
+      const DEFAULT_IFRAME_HEIGHT = '650px';
+
+      function setIframeContainerHeight(height) {
+        function pixelTextToNumber(pixelText) {
+          return Number((pixelText || '').replaceAll('px', ''));
+        }
+
+        ignoreIframeContainerResize = true;
+        const heightPixels = pixelTextToNumber(height);
+        const storagePixels = pixelTextToNumber(localStorage[iframeContainerHeightStorageKey]);
+        const defaultPixels = pixelTextToNumber(DEFAULT_IFRAME_HEIGHT);
+        const newHeight = Math.min(heightPixels || storagePixels, storagePixels || heightPixels) || defaultPixels;
+        iframeContainer.css({
+          height: `${newHeight}px`,
+        });
+        // Resume watching for resize after the next tick.
+        setTimeout(() => {ignoreIframeContainerResize = false;}, 0);
+      }
+
+      setIframeContainerHeight();
       iframeContainer.find('.SEOAID-iframe-close-button-container').on('click', () => button.click());
       let iframeHeightDebounceTimer = null;
       const resizeObserver = new ResizeObserver(() => {
+        if (ignoreIframeContainerResize) {
+          return;
+        }
         clearTimeout(iframeHeightDebounceTimer);
         iframeHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeight, 200, iframeContainerHeightStorageKey, iframeContainer);
       });
       resizeObserver.observe(iframeContainer[0]);
+      ignoreIframeContainerResize = false;
       const iframeEl = iframe[0];
       window.addEventListener('message', (event) => {
         const iframeWindow = iframeEl.contentWindow;
@@ -401,14 +424,24 @@
           IFRAME_ORIGIN = event.origin;
           // It's from this iframe.
           const data = event.data;
-          if (typeof data === 'object' && data.messageType === 'SEOAID-iframe-ready') {
-            getText()
-              .then((textToTest) => {
-                iframeWindow.postMessage({
-                  messageType: 'SEOAID-fill-text',
-                  textToTest,
-                }, IFRAME_ORIGIN);
-              });
+          if (typeof data === 'object') {
+            if (data.messageType === 'SEOAID-iframe-ready') {
+              iframeWindow.postMessage({
+                messageType: 'SEOAID-textarea-height-from-storage',
+                textareaHeight: localStorage[iframeTextareaHeightStorageKey],
+              }, IFRAME_ORIGIN);
+              getText()
+                .then((textToTest) => {
+                  iframeWindow.postMessage({
+                    messageType: 'SEOAID-fill-text',
+                    textToTest,
+                  }, IFRAME_ORIGIN);
+                });
+            } else if (data.messageType === 'SEOAID-iframe-body-scrollHeight') {
+              setIframeContainerHeight(`${data.bodyScrollHeight + 15}px`);
+            } else if (data.messageType === 'SEOAID-textarea-height-to-storage') {
+                localStorage[iframeTextareaHeightStorageKey] = data.textareaHeight;
+            }
           }
         }
       });
@@ -980,27 +1013,44 @@ h1 {
           return;
         }
         clearTimeout(textboxHeightDebounceTimer);
-        textboxHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeight, 200, iframeTexboxHeightStorageKey, textbox);
+        textboxHeightDebounceTimer = setTimeout(() => {
+          setLocalStorageFromElementHeight(iframeTexboxHeightStorageKey, textbox);
+          window.top.postMessage({
+            messageType: 'SEOAID-textarea-height-to-storage',
+            textareaHeight: localStorage[iframeTexboxHeightStorageKey],
+          }, '*');
+        }, 200);
       });
       resizeObserver.observe(textbox)
       window.addEventListener('message', function(event) {
         if (event.source === window.top && /^https?:\/\/(?:[^/.]+\.)*(?:stackexchange\.com|stackoverflow\.com|serverfault\.com|superuser\.com|askubuntu\.com|stackapps\.com|mathoverflow\.net|stackoverflowteams\.com|metasmoke.erwaysoftware.com)\/?$/.test(event.origin)) {
           // It's from SE
           const data = event.data;
-          if (typeof data === 'object' && data.messageType === 'SEOAID-fill-text') {
-            const textToTest = data.textToTest;
-            if (typeof textToTest === 'string') {
-              receivedText = textToTest;
-              document.body.classList.add('SEOAID-have-received-text');
-              setTextAndTriggerPrediction(textToTest, true);
-              setTimeout(() => {
-                resizeObserver.unobserve(textbox);
-                const storageIframeTextboxHeightPixels = Number((localStorage[iframeTexboxHeightStorageKey] || '').replaceAll('px', '')) || 480; // 480px is the default height.
-                textbox.style.height = 0;
-                textbox.style.height = `${Math.min(storageIframeTextboxHeightPixels, textbox.scrollHeight + 5)}px`;
-                resizeObserverHasSeenFirstResize = false;
-                setTimeout(() => resizeObserver.observe(textbox), 10);
-              }, 10);
+          if (typeof data === 'object') {
+            if (data.messageType === 'SEOAID-fill-text') {
+              const textToTest = data.textToTest;
+              if (typeof textToTest === 'string') {
+                receivedText = textToTest;
+                document.body.classList.add('SEOAID-have-received-text');
+                setTextAndTriggerPrediction(textToTest, true);
+                setTimeout(() => {
+                  resizeObserver.unobserve(textbox);
+                  const storageIframeTextboxHeightPixels = Number((localStorage[iframeTexboxHeightStorageKey] || '').replaceAll('px', '')) || 480; // 480px is the default height.
+                  textbox.style.height = 0;
+                  textbox.style.height = `${Math.min(storageIframeTextboxHeightPixels, textbox.scrollHeight + 5)}px`;
+                  resizeObserverHasSeenFirstResize = false;
+                  setTimeout(() => {
+                    resizeObserver.observe(textbox);
+                    window.top.postMessage({
+                      messageType: 'SEOAID-iframe-body-scrollHeight',
+                      bodyScrollHeight: document.body.scrollHeight,
+                    }, '*');
+                  }, 10);
+                }, 10);
+              }
+            } else if (data.messageType === 'SEOAID-textarea-height-from-storage') {
+              localStorage[iframeTexboxHeightStorageKey] = data.textareaHeight;
+              console.log('IFRAME: SEOAID-textarea-height-from-storage: localStorage[iframeTexboxHeightStorageKey]:', localStorage[iframeTexboxHeightStorageKey]);                                                                                                                                                                                                                 //WinMerge ignore line
             }
           }
         }
