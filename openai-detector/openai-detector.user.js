@@ -391,11 +391,15 @@
       let ignoreIframeContainerResize = true;
       const DEFAULT_IFRAME_HEIGHT = '650px';
 
-      function setIframeContainerHeight(height) {
-        function pixelTextToNumber(pixelText) {
-          return Number((pixelText || '').replaceAll('px', ''));
+      function pixelTextToNumber(pixelText) {
+        const typofPixelText = typeof pixelText;
+        if (typofPixelText === 'number' || typofPixelText === 'string') {
+          return Number((pixelText.toString() || '').replaceAll('px', ''));
         }
+        return NaN;
+      }
 
+      function setIframeContainerHeight(height) {
         ignoreIframeContainerResize = true;
         const heightPixels = pixelTextToNumber(height);
         const storagePixels = pixelTextToNumber(localStorage[iframeContainerHeightStorageKey]);
@@ -405,17 +409,17 @@
           height: `${newHeight}px`,
         });
         // Resume watching for resize after the next tick.
-        setTimeout(() => {ignoreIframeContainerResize = false;}, 0);
+        setTimeout(() => {ignoreIframeContainerResize = false;}, 20);
       }
 
       setIframeContainerHeight();
       iframeContainer.find('.SEOAID-iframe-close-button-container').on('click', () => button.click());
       let iframeHeightDebounceTimer = null;
       const resizeObserver = new ResizeObserver(() => {
+        clearTimeout(iframeHeightDebounceTimer);
         if (ignoreIframeContainerResize) {
           return;
         }
-        clearTimeout(iframeHeightDebounceTimer);
         iframeHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeightSEorMSPage, 200, iframeContainerHeightStorageKey, iframeContainer);
       });
       resizeObserver.observe(iframeContainer[0]);
@@ -431,7 +435,7 @@
             if (data.messageType === 'SEOAID-iframe-ready') {
               iframeWindow.postMessage({
                 messageType: 'SEOAID-textarea-height-from-storage',
-                textareaHeight: localStorage[iframeTextareaHeightStorageKey],
+                textareaHeight: localStorage[iframeTextareaHeightStorageKey] || 0,
               }, currentIframeOrigin);
               getText()
                 .then((textToTest) => {
@@ -441,9 +445,12 @@
                   }, currentIframeOrigin);
                 });
             } else if (data.messageType === 'SEOAID-iframe-body-scrollHeight') {
-              setIframeContainerHeight(`${data.bodyScrollHeight + 15}px`);
+              const dataScollHeightNumber = pixelTextToNumber(data.bodyScrollHeight);
+              if (dataScollHeightNumber) {
+                setIframeContainerHeight(`${dataScollHeightNumber + 15}px`);
+              }
             } else if (data.messageType === 'SEOAID-textarea-height-to-storage') {
-                localStorage[iframeTextareaHeightStorageKey] = data.textareaHeight;
+              localStorage[iframeTextareaHeightStorageKey] = data.textareaHeight || 0;
             }
           }
         }
@@ -697,7 +704,7 @@
   function inOpenAIDetectorPage() {
     function setLocalStorageFromElementHeightAIDetectorPage(storageKey, container) {
         const containerHeight = container.style.height;
-        localStorage[storageKey] = containerHeight;
+        localStorage[storageKey] = containerHeight || 0;
     }
 
     function createButton(text, className, title, onClick) {
@@ -987,6 +994,8 @@ h1 {
   padding: 5px min(1.5vw, 10px);
   font-size: 15px;
   line-height: 19.5px;
+  resize: vertical;
+  overflow: auto;
 }
 #container > p {
   order: 10;
@@ -1001,7 +1010,7 @@ h1 {
 </style>`);
       const textbox = document.getElementById('textbox');
       const iframeTexboxHeightStorageKey = 'SEOAID-textbox-height';
-      const storageIframeTextboxHeight = localStorage[iframeTexboxHeightStorageKey];
+      const storageIframeTextboxHeight = localStorage[iframeTexboxHeightStorageKey] || 0;
       if (storageIframeTextboxHeight) {
         textbox.style.height = storageIframeTextboxHeight;
       }
@@ -1020,7 +1029,7 @@ h1 {
           setLocalStorageFromElementHeightAIDetectorPage(iframeTexboxHeightStorageKey, textbox);
           window.top.postMessage({
             messageType: 'SEOAID-textarea-height-to-storage',
-            textareaHeight: localStorage[iframeTexboxHeightStorageKey],
+            textareaHeight: localStorage[iframeTexboxHeightStorageKey] || 0,
           }, '*');
         }, 200);
       });
@@ -1040,7 +1049,8 @@ h1 {
                   resizeObserver.unobserve(textbox);
                   const storageIframeTextboxHeightPixels = Number((localStorage[iframeTexboxHeightStorageKey] || '').replaceAll('px', '')) || 480; // 480px is the default height.
                   textbox.style.height = 0;
-                  textbox.style.height = `${Math.min(storageIframeTextboxHeightPixels, textbox.scrollHeight + 5)}px`;
+                  const newHeight = Math.min(storageIframeTextboxHeightPixels, textbox.scrollHeight + 5);
+                  textbox.style.height = `${newHeight}px`;
                   resizeObserverHasSeenFirstResize = false;
                   setTimeout(() => {
                     resizeObserver.observe(textbox);
@@ -1052,7 +1062,7 @@ h1 {
                 }, 10);
               }
             } else if (data.messageType === 'SEOAID-textarea-height-from-storage') {
-              localStorage[iframeTexboxHeightStorageKey] = data.textareaHeight;
+              localStorage[iframeTexboxHeightStorageKey] = data.textareaHeight || 0;
               console.log('IFRAME: SEOAID-textarea-height-from-storage: localStorage[iframeTexboxHeightStorageKey]:', localStorage[iframeTexboxHeightStorageKey]);                                                                                                                                                                                                                 //WinMerge ignore line
             }
           }
@@ -1062,7 +1072,7 @@ h1 {
         messageType: 'SEOAID-iframe-ready',
       }, '*');
     }
-  }
+  } /* inOpenAIDetectorPage */
 
   if (IFRAME_ORIGIN_REGEX.test(window.location.origin)) {
       inOpenAIDetectorPage();
