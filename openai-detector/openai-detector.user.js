@@ -389,7 +389,7 @@
       const iframeTextareaHeightStorageKey = `SEOAID-textarea-height-${IFRAME_ORIGIN_IN_PAGE}`;
       // CSS resize doesn't work on iframes in Firefox
       let ignoreIframeContainerResize = true;
-      const DEFAULT_IFRAME_HEIGHT = '650px';
+      const DEFAULT_IFRAME_HEIGHT = '685px';
 
       function pixelTextToNumber(pixelText) {
         const typofPixelText = typeof pixelText;
@@ -1047,7 +1047,7 @@ h1 {
                 setTextAndTriggerPrediction(textToTest, true);
                 setTimeout(() => {
                   resizeObserver.unobserve(textbox);
-                  const storageIframeTextboxHeightPixels = Number((localStorage[iframeTexboxHeightStorageKey] || '').replaceAll('px', '')) || 480; // 480px is the default height.
+                  const storageIframeTextboxHeightPixels = Number((localStorage[iframeTexboxHeightStorageKey] || '').replaceAll('px', '')) || 485; // 485px is the default height.
                   textbox.style.height = 0;
                   const newHeight = Math.min(storageIframeTextboxHeightPixels, textbox.scrollHeight + 5);
                   textbox.style.height = `${newHeight}px`;
