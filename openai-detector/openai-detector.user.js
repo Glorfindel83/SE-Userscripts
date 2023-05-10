@@ -64,7 +64,10 @@
   const DETECTOR_PATH = '/';
   const DETECTOR_BASE_URL = DETECTOR_ORIGIN + DETECTOR_PATH;
 
-  function inSEorMSPage(IFRAME_ORIGIN, IFRAME_URL, IFRAME_ORIGIN_REGEX) {
+  function inSEorMSPage(iframeOrigin, iframeURL, iframeOriginRegex) {
+    const IFRAME_ORIGIN_IN_PAGE = iframeOrigin;
+    const IFRAME_URL_IN_PAGE = iframeURL;
+    const IFRAME_ORIGIN_REGEX_IN_PAGE = iframeOriginRegex;
     const cache = {};
     const SE_API_CONSTANTS = {
       key: 'b4pJgQpVylPHom5vj811QQ((',
@@ -372,18 +375,18 @@
         });
     }
 
-    function setLocalStorageFromElementHeight(storageKey, container) {
+    function setLocalStorageFromElementHeightSEorMSPage(storageKey, container) {
         const containerHeight = container.css('height');
         localStorage[storageKey] = containerHeight;
     }
 
     function addSeoaidIframe(button, method, where, iframeAncestor, getText) {
-      where[method](`<div class="SEOID-iframe-container post-layout--right"><div class="SEOAID-iframe-close-button-container"><span class="SEOAID-iframe-close-button" title="close this GPT-2 Output Detector Demo iframe">×</span></div><iframe sandbox="allow-same-origin allow-scripts allow-storage-access-by-user-activation" class="SEOAID-oaid-iframe" src="${IFRAME_URL}"></iframe></div>`);
+      where[method](`<div class="SEOID-iframe-container post-layout--right"><div class="SEOAID-iframe-close-button-container"><span class="SEOAID-iframe-close-button" title="close this GPT-2 Output Detector Demo iframe">×</span></div><iframe sandbox="allow-same-origin allow-scripts allow-storage-access-by-user-activation" class="SEOAID-oaid-iframe" src="${IFRAME_URL_IN_PAGE}"></iframe></div>`);
       button.addClass('SEOAID-iframe-open SEOAID-iframe-created');
       const iframe = iframeAncestor.find('.SEOAID-oaid-iframe');
       const iframeContainer = iframeAncestor.find('.SEOID-iframe-container');
       const iframeContainerHeightStorageKey = 'SEOAID-iframeContainer-height';
-      const iframeTextareaHeightStorageKey = `SEOAID-textarea-height-${IFRAME_ORIGIN}`;
+      const iframeTextareaHeightStorageKey = `SEOAID-textarea-height-${IFRAME_ORIGIN_IN_PAGE}`;
       // CSS resize doesn't work on iframes in Firefox
       let ignoreIframeContainerResize = true;
       const DEFAULT_IFRAME_HEIGHT = '650px';
@@ -413,15 +416,15 @@
           return;
         }
         clearTimeout(iframeHeightDebounceTimer);
-        iframeHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeight, 200, iframeContainerHeightStorageKey, iframeContainer);
+        iframeHeightDebounceTimer = setTimeout(setLocalStorageFromElementHeightSEorMSPage, 200, iframeContainerHeightStorageKey, iframeContainer);
       });
       resizeObserver.observe(iframeContainer[0]);
       ignoreIframeContainerResize = false;
       const iframeEl = iframe[0];
       window.addEventListener('message', (event) => {
         const iframeWindow = iframeEl.contentWindow;
-        if (event.source === iframeWindow && IFRAME_ORIGIN_REGEX.test(event.origin)) {
-          IFRAME_ORIGIN = event.origin;
+        if (event.source === iframeWindow && IFRAME_ORIGIN_REGEX_IN_PAGE.test(event.origin)) {
+          const currentIframeOrigin = event.origin;
           // It's from this iframe.
           const data = event.data;
           if (typeof data === 'object') {
@@ -429,13 +432,13 @@
               iframeWindow.postMessage({
                 messageType: 'SEOAID-textarea-height-from-storage',
                 textareaHeight: localStorage[iframeTextareaHeightStorageKey],
-              }, IFRAME_ORIGIN);
+              }, currentIframeOrigin);
               getText()
                 .then((textToTest) => {
                   iframeWindow.postMessage({
                     messageType: 'SEOAID-fill-text',
                     textToTest,
-                  }, IFRAME_ORIGIN);
+                  }, currentIframeOrigin);
                 });
             } else if (data.messageType === 'SEOAID-iframe-body-scrollHeight') {
               setIframeContainerHeight(`${data.bodyScrollHeight + 15}px`);
@@ -505,7 +508,7 @@
       // Regular posts
       const menu = $(this);
       // Add button
-      const button = $(`<a class="SEOAID-post-menu-button" href="${IFRAME_URL}" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</button>`);
+      const button = $(`<a class="SEOAID-post-menu-button" href="${IFRAME_URL_IN_PAGE}" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</button>`);
       const cell = $('<div class="flex--item SEOAID-post-menu-item"></div>');
       cell.append(button);
       menu.children().first().append(cell);
@@ -557,7 +560,7 @@
       // Regular posts
       const tabContent = $(this);
       // Add button
-      const button = $(`<a class="SEOAID-markdown-button" href="${IFRAME_URL}" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</a>`);
+      const button = $(`<a class="SEOAID-markdown-button" href="${IFRAME_URL_IN_PAGE}" title="Run the post content through the Hugging Face GPT-2 Output Detector.">Detect OpenAI</a>`);
       const cell = $('<div class="SEOAID-Markdown-button-cntainer"></div>');
       cell.append(button);
       tabContent.append(cell);
@@ -650,7 +653,7 @@
         $(".js-revision > div:nth-child(1) a[href$='/view-source']").each(function() {
           const sourceButton = $(this);
           // Add button
-          const button = $(`<a class="flex--item" title="Run the revision content through the Hugging Face GPT-2 Output Detector." href="${IFRAME_URL}">Detect OpenAI</a>`);
+          const button = $(`<a class="flex--item" title="Run the revision content through the Hugging Face GPT-2 Output Detector." href="${IFRAME_URL_IN_PAGE}">Detect OpenAI</a>`);
           const sourceUrl = sourceButton[0].href;
           const menu = sourceButton.parent();
           menu.append(button);
@@ -692,7 +695,7 @@
   }
 
   function inOpenAIDetectorPage() {
-    function setLocalStorageFromElementHeight(storageKey, container) {
+    function setLocalStorageFromElementHeightAIDetectorPage(storageKey, container) {
         const containerHeight = container.style.height;
         localStorage[storageKey] = containerHeight;
     }
@@ -1014,7 +1017,7 @@ h1 {
         }
         clearTimeout(textboxHeightDebounceTimer);
         textboxHeightDebounceTimer = setTimeout(() => {
-          setLocalStorageFromElementHeight(iframeTexboxHeightStorageKey, textbox);
+          setLocalStorageFromElementHeightAIDetectorPage(iframeTexboxHeightStorageKey, textbox);
           window.top.postMessage({
             messageType: 'SEOAID-textarea-height-to-storage',
             textareaHeight: localStorage[iframeTexboxHeightStorageKey],
