@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.6
+// @version     0.7
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -27,6 +27,7 @@
   "use strict";
 
   $('aside:contains("It was flagged as spam or offensive content")').each(function() {
+    let notices = $(this).parent().html();
     let postBody = $(this).parents("div.js-post-body");
     let post = postBody.parents("div.deleted-answer");
 
@@ -45,7 +46,7 @@
         }
 
         // Replace post body
-        postBody[0].innerHTML = $(data).find('div.js-post-body')[0].innerHTML;
+        postBody[0].innerHTML = notices + $(data).find('div.js-post-body')[0].innerHTML;
 
         // Add link to revision history
         let button = $('<a href="' + revisionHistory + '">Revisions</a>');
