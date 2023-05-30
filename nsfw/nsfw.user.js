@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.8
+// @version     0.9
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -26,7 +26,7 @@
 (function () {
   "use strict";
 
-  $('aside:contains("This post is hidden.")').each(function() {
+  $('aside:contains("hidden")').each(function() {
     let notices = $(this).parent().html();
     let postBody = $(this).parents("div.js-post-body");
     if (!postBody.text().contains("was marked as spam or rude or abusive"))
