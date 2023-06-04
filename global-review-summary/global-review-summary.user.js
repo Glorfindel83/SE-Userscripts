@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name          Stack Exchange Global Review Summary
-// @version       0.7
+// @version       0.8
 // @description   Stack Exchange network wide review summary available in your network profile
 // @author        Glorfindel
 // @attribution   Floern (https://github.com/Floern)
 // @updateURL     https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/global-review-summary/global-review-summary.user.js
 // @downloadURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/global-review-summary/global-review-summary.user.js
-// @include       *://stackexchange.com/users/*/*
+// @match         *://stackexchange.com/users/*/*
 // @match         *://*.stackexchange.com/review*
 // @match         *://*.stackoverflow.com/review*
 // @match         *://*.superuser.com/review*
@@ -301,14 +301,14 @@ function parseNetworkAccounts(html) {
             document.getElementById('review-summary-loading').style.visibility = 'hidden';
         }
         loadNextSite();
-    };  
+    };
     function loadNextSite() {
         i++;
         if (i >= accounts.length) {
             // end of list
             return;
         }
-      
+
         let account = accounts[i];
         setTimeout(function() {
             if (account.reputation >= 350) {
@@ -332,7 +332,7 @@ function parseNetworkAccounts(html) {
                                 break;
                             }
                         }
-                      
+
                         if (found) {
                             startLoadingSiteReviewSummary(account);
                         } else {
@@ -399,15 +399,15 @@ function loadSiteReviewSummary(siteName, siteReviewURL, finishedCallback, index)
  */
 function parseSiteReviewSummary(siteName, siteReviewURL, html, index) {
     let pageNode = new DOMParser().parseFromString(html, 'text/html');
-  
+
     // Determine # of reviews
-    let total = $(pageNode).find(".fs-body2 .fw-bold").text();
+    let total = $(pageNode).find("div.fs-body2 div.fw-bold").text();
     let reviews = parseInt(total.replace(",", ""));
     if (reviews == 0) {
         // skip when no reviews
         return;
     }
-  
+
     // Collect totals
     if (typeof(totalsPerSite[siteName]) === "undefined") {
        totalsPerSite[siteName] = reviews;
@@ -420,7 +420,7 @@ function parseSiteReviewSummary(siteName, siteReviewURL, html, index) {
     updateGlobalReviewStats();
 
     let siteReviewSummaryTr = summariesPerSite[siteName];
-    if (typeof(siteReviewSummaryTr) === "undefined") {  
+    if (typeof(siteReviewSummaryTr) === "undefined") {
       // create table row for this site
       siteReviewSummaryTr = document.createElement('tr');
       let siteFaviconURL = pageNode.querySelector('link[rel*="icon"]').href;
@@ -437,7 +437,7 @@ function parseSiteReviewSummary(siteName, siteReviewURL, html, index) {
     }
     siteReviewSummaryTr.querySelector("." + reviewURIs[index]).innerText = reviews.toLocaleString();
     siteReviewSummaryTr.querySelector(".total").innerText = totalsPerSite[siteName].toLocaleString();
-  
+
     // keep order
     sortTable(sortedColIndex, sortedColAsc);
 }
