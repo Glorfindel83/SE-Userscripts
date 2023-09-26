@@ -68,15 +68,10 @@ let pronounListRegex = new RegExp('\\b((' + allPronouns + ')(\\s*/\\s*(' + allPr
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
 let explicitPronounsRegex = /pronouns:\s*([^.\n)\]}<]*)(\.|\n|\)|]|}|<|$)/im;
 let unlikelyCombinations = ["her/his", "her/him", "he/she"];
-let pronounWrapLimit = 10; // If the pronoun length is longer than this, we hide the pronouns in a details box.
+let pronounWrapLimit = 13; // If the pronoun length is longer than this, we hide the excess by adding ellipsis.
 
 function pronounWrapper(pronouns) {
-  if (pronouns.length > pronounWrapLimit) { // It's too long so it's wrapped in a details box.
-    return "<details><summary>Pronouns</summary>" + pronouns + "</details>";
-  }
-  else { // Horray, we don't need to do anything!
-    return pronouns;
-  }
+  return pronouns.replace(new RegExp(`(?<=.{${pronounWrapLimit}}).*`), "…")
 }
 
 // Keys:   user IDs
@@ -130,7 +125,7 @@ function showPronounsForChat($element, pronouns) {
   if (pronouns == "") {
     return;
   }
-  
+
   addPronounsToChatSignatures($element, pronouns);
 
   // After clicking the signature (to show the chat profile popup), *sometimes*
@@ -177,7 +172,7 @@ function showPronouns($element, pronouns) {
   if (pronouns == "" || $element.siblings(".pronouns").length != 0) {
     return;
   }
-  
+
   // Make sure the pronouns don't end up between the username and the diamond
   // or staff/mod labels
   do {
@@ -187,7 +182,7 @@ function showPronouns($element, pronouns) {
       break;
     $element = $nextElement;
   } while (true);
-  
+
   $element.after($('<span class="pronouns"> ' + pronounWrapper(pronouns) + '</span>'));
 }
 
@@ -302,7 +297,7 @@ const selector = "div.user-details > a, a.comment-user";
   }
 
   $userElements.each(function() { decorate($(this)); });
-  
+
   // Make sure new answers / comments receive the same treatment
   waitForKeyElements(selector, function(jNode) {
     decorate($(jNode));
