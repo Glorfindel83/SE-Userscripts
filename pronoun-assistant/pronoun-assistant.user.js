@@ -68,6 +68,16 @@ let pronounListRegex = new RegExp('\\b((' + allPronouns + ')(\\s*/\\s*(' + allPr
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
 let explicitPronounsRegex = /pronouns:\s*([^.\n)\]}<]*)(\.|\n|\)|]|}|<|$)/im;
 let unlikelyCombinations = ["her/his", "her/him", "he/she"];
+let pronounWrapLimit = 10; // If the pronoun length is longer than this, we hide the pronouns in a details box.
+
+function pronounWrapper(pronouns) {
+  if (pronouns.length > pronounWrapLimit) { // It's too long so it's wrapped in a details box.
+    return "<details><summary>Pronouns</summary>" + pronouns + "</details>";
+  }
+  else { // Horray, we don't need to do anything!
+    return pronouns;
+  }
+}
 
 // Keys:   user IDs
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
@@ -138,7 +148,7 @@ function addPronounsToChatSignatures($element, pronouns) {
   // The element might contain both a tiny and a full signature
   $element.find("div.username").each(function (index, usernameElement) {
     usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
-      + '<span class="pronouns"> ' + pronouns + '</span>';
+      + '<span class="pronouns"> ' + pronounWrapper(pronouns) + '</span>';
   });
 }
 
@@ -178,7 +188,7 @@ function showPronouns($element, pronouns) {
     $element = $nextElement;
   } while (true);
   
-  $element.after($('<span class="pronouns"> ' + pronouns + '</span>'));
+  $element.after($('<span class="pronouns"> ' + pronounWrapper(pronouns) + '</span>'));
 }
 
 // Check text (obtained from the user's 'about me' in their chat profile or Q&A profile) for pronoun indicators
