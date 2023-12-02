@@ -159,6 +159,12 @@ function buttonClicked(question) {
   let statusText = status.length > 0 ? status[0].innerText : '';
   let closed = statusText == 'Closed.';
 
+  // Will close with 1 vote?
+  let closeVoteElement = $('.existing-flag-count')[0]?.innerText;
+  let closeVotes = parseInt(closeVoteElement);
+  let alreadyCloseVoted = $('.s-close-question-link')[0]?.title.startsWith("You voted to close");
+  let canFinishClosure = (closeVotes >= 4 && !alreadyCloseVoted) || isModerator;
+
   // Analyze comments
   let comments = question.find('ul.comments-list');
   var otherNonOwnerComments = [];
@@ -179,7 +185,7 @@ function buttonClicked(question) {
   can['downvote'] = hasDownvotePrivilege && !downvoted;
   can['flag'] = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
   can['close'] = hasCloseVotePrivilege && !closed;
-  can['delete'] = (hasDeleteVotePrivilege && closed && score <= -3) || isModerator;
+  can['delete'] = (hasDeleteVotePrivilege && (closed || canFinishClosure) && (score <= -3 || score <= -2 && !downvoted)) || isModerator;
   // TODO: also when downvote and/or close vote bring the question into deletion territory
 
   // Determine which actions to take
