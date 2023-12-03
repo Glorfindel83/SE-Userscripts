@@ -37,7 +37,7 @@ let isModerator = $("a.js-mod-inbox-button").length > 0;
 
 (function() {
   "use strict";
-  
+
   // Find question (works when on Q&A page)
   let question = $('#question');
   if (question.length == 0)
@@ -80,7 +80,7 @@ waitForKeyElements('div.question-summary, div.js-post-summary', function(jNode) 
   let action = jNode.find('a.started-link, div.user-action-time, .s-user-card--time a');
   if (!action.text().trim().startsWith("asked "))
     return;
-  
+
   main(null, jNode);
 });
 
@@ -109,11 +109,11 @@ function isNewUser(question) {
   return true;
 }
 
-function main(question, summary) {  
+function main(question, summary) {
   // Can the script do anything?
   if (!hasCommentPrivilege && !hasFlagPrivilege)
     return;
-  
+
   let button = $('<a title="down-/close-/delete vote and post a welcoming comment">Lost soul</a>');
   if (question == null) {
     // Add link
@@ -126,7 +126,7 @@ function main(question, summary) {
     button.click(function() {
       // Load page (some data could be determined from the summary, but it's easier to reuse the 'main' part of the code)
       let link = summary.find('a.question-hyperlink, h3.s-post-summary--content-title > a.s-link').prop('href');
-      $.get(link, function(data) {        
+      $.get(link, function(data) {
         question = $(data).find('#question');
         if (question.hasClass('deleted-answer')) { // sic
           alert('The question has already been deleted, no action is necessary.');
@@ -141,7 +141,7 @@ function main(question, summary) {
     let cell = $('<div class="flex--item"></div>');
     cell.append(button);
     let menu = question.find('.js-post-menu > div:first-child');
-    menu.append(cell);    
+    menu.append(cell);
     button.click(function() {
       buttonClicked(question);
     });
@@ -159,6 +159,12 @@ function buttonClicked(question) {
   let statusText = status.length > 0 ? status[0].innerText : '';
   let closed = statusText == 'Closed.';
 
+  // Will close with 1 vote?
+  let closeVoteElement = question.find('.existing-flag-count')[0]?.innerText;
+  let closeVotes = parseInt(closeVoteElement);
+  let alreadyCloseVoted = question.find('.js-close-question-link')[0]?.title.startsWith("You voted to close");
+  let canFinishClosure = (closeVotes >= 4 && !alreadyCloseVoted) || isModerator;
+
   // Analyze comments
   let comments = question.find('ul.comments-list');
   var otherNonOwnerComments = [];
@@ -172,14 +178,14 @@ function buttonClicked(question) {
       otherNonOwnerComments.push(this);
     }
   });
-  
+
   // Determine which actions can be taken
   can['upvote'] = hasUpvotePrivilege;
   can['comment'] = hasCommentPrivilege;
   can['downvote'] = hasDownvotePrivilege && !downvoted;
   can['flag'] = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
   can['close'] = hasCloseVotePrivilege && !closed;
-  can['delete'] = (hasDeleteVotePrivilege && closed && score <= -3) || isModerator;
+  can['delete'] = (hasDeleteVotePrivilege && (closed || canFinishClosure) && (score <= -3 || score <= -2 && !downvoted)) || isModerator;
   // TODO: also when downvote and/or close vote bring the question into deletion territory
 
   // Determine which actions to take
@@ -195,7 +201,7 @@ function buttonClicked(question) {
 
   // Generate HTML for dialog
   var html = `
-<aside class="s-modal bg-transparent pe-none js-stacks-managed-popup js-fades-with-aria-hidden" id="modal-base" tabindex="-1" role="dialog" aria-labelledby="mod-modal-title" aria-describedby="mod-modal-description" aria-hidden="false">    
+<aside class="s-modal bg-transparent pe-none js-stacks-managed-popup js-fades-with-aria-hidden" id="modal-base" tabindex="-1" role="dialog" aria-labelledby="mod-modal-title" aria-describedby="mod-modal-description" aria-hidden="false">
     <form class="s-modal--dialog js-modal-dialog js-keyboard-navigable-modal pe-auto" role="document" data-controller="se-draggable" method="get" action="#">
         <h1 class="s-modal--header fs-headline1 fw-bold mr48 c-move js-first-tabbable" id="modal-title" tabindex="0" data-target="se-draggable.handle">
             'Saviour' of Lost Souls
@@ -226,7 +232,7 @@ function buttonClicked(question) {
   $(document.body).append($(html));
 }
 
-function createDialog(question) {  
+function createDialog(question) {
   // Analyze comments
   let comments = question.find('ul.comments-list');
   var welcomingComments = [];
@@ -248,7 +254,7 @@ function createDialog(question) {
       otherNonOwnerComments.push(comment);
     }
   });
-  
+
   // Define functions which can be called by the dialog
   window.saviourOfLostSouls = {};
   saviourOfLostSouls.closeDialog = function() {
@@ -258,7 +264,7 @@ function createDialog(question) {
     // Prepare votes/comments
     let postID = parseInt(question.attr('data-questionid'));
     let fkey = window.localStorage["se:fkey"].split(",")[0];
-    
+
     if (selected("comment")) {
       // Post comment
       let owner = question.find('div.post-signature.owner');
@@ -303,7 +309,7 @@ function createDialog(question) {
 
     if (hasUpvotePrivilege) {
       // Upvote comments
-      for (let comment of selected("upvote") ? welcomingComments.concat(otherNonOwnerComments) : welcomingComments) {        
+      for (let comment of selected("upvote") ? welcomingComments.concat(otherNonOwnerComments) : welcomingComments) {
         $.post({
           url: "https://" + document.location.host + "/posts/comments/" + comment.attr('data-comment-id') + "/vote/2", // 2 = upvote
           data: "fkey=" + fkey,
@@ -369,10 +375,10 @@ function createDialog(question) {
         });
       }, 500); // small delay to make sure the close vote is registered
     }
-    
+
     // Dismiss dialog
     $("#modal-base").remove();
-    
+
     // NOTE: if this is done too soon, the delete vote might not be cast.
     if (window.location.pathname.startsWith("/questions/")
      || window.location.pathname.startsWith("/review/")
