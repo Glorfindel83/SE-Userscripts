@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
-// @version     2.10
+// @version     2.11
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -221,7 +221,7 @@ function buttonClicked(question) {
         </div>
         <br/>
         <div class="d-flex gs8 gsx s-modal--footer">
-            <button class="flex--item s-btn s-btn__primary" type="submit" onclick="saviourOfLostSouls.submitDialog();">Confirm</button>
+            <button class="flex--item s-btn s-btn__primary s-btn__filled" type="submit" onclick="saviourOfLostSouls.submitDialog();">Confirm</button>
             <button class="flex--item s-btn js-modal-close" type="button" onclick="saviourOfLostSouls.closeDialog();">Cancel</button>
         </div>
         <button class="s-modal--close s-btn s-btn__muted js-modal-close js-last-tabbable" type="button" aria-label="Close" onclick="saviourOfLostSouls.closeDialog();">
