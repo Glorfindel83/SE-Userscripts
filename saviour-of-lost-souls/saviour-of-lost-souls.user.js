@@ -3,7 +3,7 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a shortcut to down-/close-/delete vote and post a welcoming comment to Lost Souls on Meta Stack Exchange and some other sites.
 // @author      Glorfindel
-// @version     2.9
+// @version     2.11
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -186,6 +186,12 @@ function buttonClicked(question, reviewItemID) {
   let statusText = status.length > 0 ? status[0].innerText : '';
   let closed = statusText == 'Closed.';
 
+  // Will close with 1 vote?
+  let closeVoteElement = question.find('.existing-flag-count')[0]?.innerText;
+  let closeVotes = parseInt(closeVoteElement);
+  let alreadyCloseVoted = question.find('.js-close-question-link')[0]?.title.startsWith("You voted to close");
+  let canFinishClosure = (closeVotes >= 4 && !alreadyCloseVoted) || isModerator;
+
   // Analyze comments
   let comments = question.find('ul.comments-list');
   var otherNonOwnerComments = [];
@@ -206,7 +212,7 @@ function buttonClicked(question, reviewItemID) {
   can['downvote'] = hasDownvotePrivilege && !downvoted;
   can['flag'] = hasFlagPrivilege && !hasCloseVotePrivilege && !closed;
   can['close'] = hasCloseVotePrivilege && !closed;
-  can['delete'] = (hasDeleteVotePrivilege && closed && score <= -3) || isModerator;
+  can['delete'] = (hasDeleteVotePrivilege && (closed || canFinishClosure) && (score <= -3 || score <= -2 && !downvoted)) || isModerator;
   // TODO: also when downvote and/or close vote bring the question into deletion territory
   can['review'] = reviewItemID != null;
 
@@ -244,7 +250,7 @@ function buttonClicked(question, reviewItemID) {
         </div>
         <br/>
         <div class="d-flex gs8 gsx s-modal--footer">
-            <button class="flex--item s-btn s-btn__primary" type="submit" onclick="saviourOfLostSouls.submitDialog();">Confirm</button>
+            <button class="flex--item s-btn s-btn__primary s-btn__filled" type="submit" onclick="saviourOfLostSouls.submitDialog();">Confirm</button>
             <button class="flex--item s-btn js-modal-close" type="button" onclick="saviourOfLostSouls.closeDialog();">Cancel</button>
         </div>
         <button class="s-modal--close s-btn s-btn__muted js-modal-close js-last-tabbable" type="button" aria-label="Close" onclick="saviourOfLostSouls.closeDialog();">

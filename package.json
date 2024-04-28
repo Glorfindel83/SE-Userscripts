@@ -1,0 +1,57 @@
+{
+  "name": "SE-Userscripts",
+  "version": "0.0.0",
+  "description": "A selection of useful userscripts by Glorfindel.",
+  "scripts": {
+    "test": "xo",
+    "get-meta": "bash ./extractScriptMetadata.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Glorfindel83/SE-Userscripts.git"
+  },
+  "author": "Glorfindel",
+  "license": "(MIT OR Apache-2.0)",
+  "private": true,
+  "devDependencies": {
+    "xo": "^0.17.1"
+  },
+  "xo": {
+    "space": true,
+    "envs": [
+      "browser",
+      "jquery"
+    ],
+    "rules": {
+      "quotes": [
+        "error",
+        "double",
+        {
+          "avoidEscape": true
+        }
+      ],
+      "camelcase": 1,
+      "brace-style": 0,
+      "no-prototype-builtins": 0,
+      "dot-notation": 0,
+      "radix": 0,
+      "no-warning-comments": 0,
+      "no-alert": 0,
+      "one-var": 0,
+      "linebreak-style": "off",
+      "comma-dangle": "off",
+      "no-eq-null": "off",
+      "eqeqeq": [
+        "error",
+        "smart"
+      ],
+      "unicorn/filename-case": "off"
+    },
+    "globals": [
+      "CHAT",
+      "GM",
+      "Notifier",
+      "StackExchange"
+    ]
+  }
+}
