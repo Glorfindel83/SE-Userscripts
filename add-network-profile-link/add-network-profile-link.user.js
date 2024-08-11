@@ -88,7 +88,7 @@
         chatName = 'stackexchangemeta';
         break;
     }
-    const chatLogo = `<div class="favicon favicon-${chatName}" title="Chat site favicon"/>`;
+    const chatLogo = `<div class="favicon favicon-${chatName}" title="Chat site favicon"></div>`;
     const chatLink = `${location.protocol}//${chatHost}/${(chatID !== -1) ? 'account' : 'users'}/${chatID}`;
 
     // If the profile page uses a dropdown, insert link to chat profile as the first item in the list;
