@@ -5,6 +5,7 @@
 // @author      Glorfindel
 // @contributor Spevacus
 // @contributor Cody Gray
+// @contributor gparyani
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @supportURL  https://stackapps.com/q/9328
@@ -21,6 +22,7 @@
 // @exclude     *://chat.stackexchange.com/users/*
 // @exclude     *://chat.stackoverflow.com/users/*
 // @exclude     *://chat.meta.stackexchange.com/users/*
+// @exclude     *://data.stackexchexchange.com/users/*
 // @grant       none
 // ==/UserScript==
 /* globals $:readonly, StackExchange:readonly */
@@ -40,7 +42,8 @@
     const userID = StackExchange.user?.options?.userId;
     const chatID = StackExchange.user?.options?.accountId;
     if ((typeof(userID) === 'undefined') ||
-        (typeof(chatID) === 'undefined')) return;
+        (typeof(chatID) === 'undefined') ||
+        userID < -1 || chatID < -1) return;
 
     // Check if link to the network profile is already present.
     const user = $("#mainbar-full.user-show-new");
