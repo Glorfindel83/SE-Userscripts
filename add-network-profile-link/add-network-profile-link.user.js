@@ -9,7 +9,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/add-network-profile-link/add-network-profile-link.user.js
 // @supportURL  https://stackapps.com/q/9328
-// @version     1.5
+// @version     1.5.1
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://*.superuser.com/users/*
@@ -22,7 +22,7 @@
 // @exclude     *://chat.stackexchange.com/users/*
 // @exclude     *://chat.stackoverflow.com/users/*
 // @exclude     *://chat.meta.stackexchange.com/users/*
-// @exclude     *://data.stackexchexchange.com/users/*
+// @exclude     *://data.stackexchange.com/users/*
 // @grant       none
 // ==/UserScript==
 /* globals $:readonly, StackExchange:readonly */
