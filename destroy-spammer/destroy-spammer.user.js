@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/destroy-spammer/destroy-spammer.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/destroy-spammer/destroy-spammer.user.js
-// @version     0.10
+// @version     0.10.1
 // @match       *://*.stackexchange.com/users/*
 // @match       *://*.stackoverflow.com/users/*
 // @match       *://stackoverflow.com/users/*
@@ -29,7 +29,7 @@
     return; // e.g. flag summary page
   var userID = userIDRegex[1];
   var userName = $(".fs-headline2").text().trim();
-  var userNameIsSuspicious = typeof userName !== 'undefined' && userName.toLowerCase().contains("insur");
+  var userNameIsSuspicious = typeof userName !== 'undefined' && (userName.toLowerCase().contains("insur") || userName == "Asim Ahmed");
 
   // Find 'Mod' dialog link
   var moderatorLinkElement = $('a[data-se-mod-button-id=' + userID + ']');
