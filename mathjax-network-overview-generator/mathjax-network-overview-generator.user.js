@@ -7,7 +7,7 @@
 // @author      rene
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/mathjax-network-overview-generator/mathjax-network-overview-generator.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/mathjax-network-overview-generator/mathjax-network-overview-generator.user.js
-// @version     0.3
+// @version     0.4
 // @connect     *
 // @require     https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @grant       GM_xmlhttpRequest
@@ -33,7 +33,7 @@
           // Parse MathJax config (thanks @IlmariKaronen)
           let script = document.find("script[type='text/x-mathjax-config']").html().trim();
           let config = script.match(/^MathJax\.Hub\.Config\(([\s\S]*)\);$/)[1];
-          site.delim = config.contains('inlineMath: [ ["\\\\$"');
+          site.delim = config.contains('inlineMath: [["\\\\$"');
           site.mhchem = config.contains('"[mhchem]/mhchem.js"');
           // Next site
           checkConfig(siteIndex + 1);
