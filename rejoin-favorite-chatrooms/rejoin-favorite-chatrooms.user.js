@@ -6,7 +6,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/rejoin-favorite-chatrooms/rejoin-favorite-chatrooms.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/rejoin-favorite-chatrooms/rejoin-favorite-chatrooms.user.js
 // @supportURL  https://stackapps.com/q/9336/34061
-// @version     0.1.1
+// @version     0.2
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -27,3 +27,6 @@ waitForKeyElements("#my-rooms", function(jNode) {
   });
   message.append(button);
 });
+
+// Remove the new link to the FAQ. It takes up too much vertical space, and the handful of users using this script won't need that link here anyway.
+$("#learnmore").remove();
