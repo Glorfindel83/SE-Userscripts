@@ -68,6 +68,11 @@ let pronounListRegex = new RegExp('\\b((' + allPronouns + ')(\\s*/\\s*(' + allPr
 let myPronounIsRegex = /(https?:\/\/)?(my\.)?pronoun\.is\/([\w/]+)/i;
 let explicitPronounsRegex = /pronouns:\s*([^.\n)\]}<]*)(\.|\n|\)|]|}|<|$)/im;
 let unlikelyCombinations = ["her/his", "her/him", "he/she"];
+let pronounWrapLimit = 13; // If the pronoun length is longer than this, we hide the excess by adding ellipsis.
+
+function pronounWrapper(pronouns) {
+  return pronouns.replace(new RegExp(`(?<=.{${pronounWrapLimit}}).*`), "…")
+}
 
 // Keys:   user IDs
 // Values: either a list of DOM elements (specifically, the anchors to chat profiles)
@@ -120,7 +125,7 @@ function showPronounsForChat($element, pronouns) {
   if (pronouns == "") {
     return;
   }
-  
+
   addPronounsToChatSignatures($element, pronouns);
 
   // After clicking the signature (to show the chat profile popup), *sometimes*
@@ -138,7 +143,7 @@ function addPronounsToChatSignatures($element, pronouns) {
   // The element might contain both a tiny and a full signature
   $element.find("div.username").each(function (index, usernameElement) {
     usernameElement.innerHTML = '<span class="name">' + usernameElement.innerHTML + '</span><br/>'
-      + '<span class="pronouns"> ' + pronouns + '</span>';
+      + '<span class="pronouns"> ' + pronounWrapper(pronouns) + '</span>';
   });
 }
 
@@ -167,7 +172,7 @@ function showPronouns($element, pronouns) {
   if (pronouns == "" || $element.siblings(".pronouns").length != 0) {
     return;
   }
-  
+
   // Make sure the pronouns don't end up between the username and the diamond
   // or staff/mod labels
   do {
@@ -177,8 +182,8 @@ function showPronouns($element, pronouns) {
       break;
     $element = $nextElement;
   } while (true);
-  
-  $element.after($('<span class="pronouns"> ' + pronouns + '</span>'));
+
+  $element.after($('<span class="pronouns"> ' + pronounWrapper(pronouns) + '</span>'));
 }
 
 // Check text (obtained from the user's 'about me' in their chat profile or Q&A profile) for pronoun indicators
@@ -292,7 +297,7 @@ const selector = "div.user-details > a, a.comment-user";
   }
 
   $userElements.each(function() { decorate($(this)); });
-  
+
   // Make sure new answers / comments receive the same treatment
   waitForKeyElements(selector, function(jNode) {
     decorate($(jNode));
