@@ -2,6 +2,7 @@
 // @name        Stack Exchange - Review Keyboard Shortcuts
 // @description Adds (some of) the familiar keyboard shortcuts to the review queues, where they are desperately needed
 // @namespace   https://github.com/Glorfindel83/
+// @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/review-keyboard-shortcuts/review-keyboard-shortcuts.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/review-keyboard-shortcuts/review-keyboard-shortcuts.user.js
 // @supportURL  https://stackapps.com/q/11875/34061
