@@ -172,7 +172,7 @@ function buttonClicked(question) {
   var hasNonOwnerComment = false;
   comments.find('li').each(function() {
     let commentUser = $(this).find('a.comment-user')[0];
-    if (commentUser.classList.contains('owner'))
+    if (typeof commentUser != 'undefined' && commentUser.classList.contains('owner'))
       return;
     hasNonOwnerComment = true;
     if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") < 0) {
@@ -242,7 +242,7 @@ function createDialog(question) {
     let comment = $(this);
     // Comment by post author?
     let commentUser = comment.find('a.comment-user')[0];
-    if (commentUser.classList.contains('owner'))
+    if (typeof commentUser != 'undefined' && commentUser.classList.contains('owner'))
       return;
     // Can we upvote it?
     let upButtons = $(comment).find("a.comment-up");
