@@ -3,6 +3,9 @@
 // @namespace   https://github.com/Glorfindel83/
 // @description Adds a shortcut to down-/close-/delete vote and post a welcoming comment to Lost Souls on Meta Stack Exchange and some other sites.
 // @author      Glorfindel
+// @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
+// @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
+// @supportURL  https://stackapps.com/q/8122/34061
 // @version     2.11
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
@@ -198,7 +201,7 @@ function buttonClicked(question, reviewItemID) {
   var hasNonOwnerComment = false;
   comments.find('li').each(function() {
     let commentUser = $(this).find('a.comment-user')[0];
-    if (commentUser.classList.contains('owner'))
+    if (typeof commentUser != 'undefined' && commentUser.classList.contains('owner'))
       return;
     hasNonOwnerComment = true;
     if ($(this).find("span.comment-copy")[0].innerText.toLowerCase().indexOf("welcome to") < 0) {
@@ -270,7 +273,7 @@ function createDialog(question, reviewItemID) {
     let comment = $(this);
     // Comment by post author?
     let commentUser = comment.find('a.comment-user')[0];
-    if (commentUser.classList.contains('owner'))
+    if (typeof commentUser != 'undefined' && commentUser.classList.contains('owner'))
       return;
     // Can we upvote it?
     let upButtons = $(comment).find("a.comment-up");

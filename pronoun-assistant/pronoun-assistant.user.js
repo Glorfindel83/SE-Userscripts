@@ -8,7 +8,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/pronoun-assistant/pronoun-assistant.user.js
 // @supportURL  https://stackapps.com/questions/8440/pronoun-assistant
-// @version     2.11
+// @version     2.12
 // @match       *://chat.stackexchange.com/rooms/*
 // @match       *://chat.stackoverflow.com/rooms/*
 // @match       *://chat.meta.stackexchange.com/rooms/*
@@ -120,7 +120,7 @@ function showPronounsForChat($element, pronouns) {
   if (pronouns == "") {
     return;
   }
-  
+
   addPronounsToChatSignatures($element, pronouns);
 
   // After clicking the signature (to show the chat profile popup), *sometimes*
@@ -167,7 +167,7 @@ function showPronouns($element, pronouns) {
   if (pronouns == "" || $element.siblings(".pronouns").length != 0) {
     return;
   }
-  
+
   // Make sure the pronouns don't end up between the username and the diamond
   // or staff/mod labels
   do {
@@ -177,7 +177,7 @@ function showPronouns($element, pronouns) {
       break;
     $element = $nextElement;
   } while (true);
-  
+
   $element.after($('<span class="pronouns"> ' + pronouns + '</span>'));
 }
 
@@ -244,7 +244,7 @@ waitForKeyElements("a.signature", function(jNode) {
 });
 
 // Selector for Q&A sites
-const selector = "div.user-details > a, a.comment-user";
+const selector = "div.user-details > a:not(.d-none), a.comment-user";
 
 // Q&A site user cards & comment usernames
 (async () => {
@@ -292,7 +292,7 @@ const selector = "div.user-details > a, a.comment-user";
   }
 
   $userElements.each(function() { decorate($(this)); });
-  
+
   // Make sure new answers / comments receive the same treatment
   waitForKeyElements(selector, function(jNode) {
     decorate($(jNode));
