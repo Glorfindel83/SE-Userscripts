@@ -6,7 +6,7 @@
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/saviour-of-lost-souls/saviour-of-lost-souls.user.js
 // @supportURL  https://stackapps.com/q/8122/34061
-// @version     2.11
+// @version     2.11.2
 // @match       *://meta.stackexchange.com/*
 // @match       *://meta.stackoverflow.com/*
 // @match       *://softwarerecs.stackexchange.com/*
@@ -187,7 +187,7 @@ function buttonClicked(question, reviewItemID) {
   // Closed?
   let status = question.find('aside.s-notice b');
   let statusText = status.length > 0 ? status[0].innerText : '';
-  let closed = statusText == 'Closed.';
+  let closed = statusText == 'closed';
 
   // Will close with 1 vote?
   let closeVoteElement = question.find('.existing-flag-count')[0]?.innerText;
