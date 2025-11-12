@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.9
+// @version     0.10
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -29,12 +29,16 @@
   $('aside:contains("hidden")').each(function() {
     let notices = $(this).parent().html();
     let postBody = $(this).parents("div.js-post-body");
-    if (!postBody.text().contains("was marked as spam or rude or abusive"))
+    if (!postBody.text().contains("was flagged as spam or offensive content"))
       return;
-    let post = postBody.parents("div.deleted-answer");
+    let post = postBody.parents(".deleted-answer");
 
     // Load revision history
-    let revisionHistory = postBody.children('a').attr('href');
+    var revisionHistory = postBody.children('a').attr('href');
+    if (typeof revisionHistory == 'undefined') {
+      // e.g. Staging Ground
+      revisionHistory = postBody.children('.hidden-deleted-question').children('a').attr('href');
+    }
     let postID = parseInt(revisionHistory.split('/')[2]);
     $.get(revisionHistory, function(historyData) {
       // Find link to latest revision
