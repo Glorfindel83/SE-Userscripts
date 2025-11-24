@@ -5,7 +5,7 @@
 // @author      Glorfindel
 // @updateURL   https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
 // @downloadURL https://raw.githubusercontent.com/Glorfindel83/SE-Userscripts/master/nsfw/nsfw.user.js
-// @version     0.10
+// @version     0.11
 // @match       *://*.stackexchange.com/*
 // @match       *://*.stackoverflow.com/*
 // @match       *://*.superuser.com/*
@@ -29,7 +29,9 @@
   $('aside:contains("hidden")').each(function() {
     let notices = $(this).parent().html();
     let postBody = $(this).parents("div.js-post-body");
-    if (!postBody.text().contains("was flagged as spam or offensive content"))
+    // cf. https://chat.meta.stackexchange.com/transcript/message/10241324#10241324
+    if (!postBody.text().contains("was marked as spam or rude or abusive") &&
+        !postBody.text().contains("was flagged as spam or offensive content"))
       return;
     let post = postBody.parents(".deleted-answer");
 
